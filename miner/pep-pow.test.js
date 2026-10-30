@@ -75,6 +75,6 @@ assert.equal(difficultyToScryptTarget('1'), SCRYPT_DIFF1_TARGET);
 assert.equal(difficultyToScryptTarget('65536'), SCRYPT_DIFF1_TARGET / 65536n);
 assert.equal(difficultyToScryptTarget('0.5'), SCRYPT_DIFF1_TARGET * 2n);
 assert.equal(hashMeetsTarget(Buffer.alloc(32), 1n), true);
-assert.equal(hashMeetsTarget(Buffer.from('01' + '00'.repeat(31), 'hex'), 1n), false);
+assert.equal(hashMeetsTarget(Buffer.from('02' + '00'.repeat(31), 'hex'), 1n), false);
 
 console.log('PEP PoW tests passed: 5 official Scrypt vectors + header/coinbase/target checks.');
