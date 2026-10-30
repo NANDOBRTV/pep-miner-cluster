@@ -82,7 +82,7 @@ function describeJob(params) {
     }
   };
   try {
-    fs.writeFileSync(capturePath, JSON.stringify(capture, null, 2) + '\\n', { mode: 0o600 });
+    fs.writeFileSync(capturePath, JSON.stringify(capture, null, 2) + '\n', { mode: 0o600 });
     console.log('Full public job data saved locally to config/job-capture.json (do not publish this file).');
   } catch (err) {
     console.log('Could not save job capture: ' + err.message);
