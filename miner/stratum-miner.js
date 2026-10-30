@@ -71,6 +71,8 @@ let rejectedShares = 0;
 let submittedShares = 0;
 let startedAt = 0;
 let finished = false;
+let reconnectDelayMs = 1000;
+let reconnectTimer = null;
 const pending = new Map();
 const thermalTimer = setInterval(checkThermal, 2000);
 const runtimeTimer = setTimeout(() => shutdown('Configured mining session limit reached.'), maxRuntimeSeconds * 1000);
@@ -200,6 +202,7 @@ function shutdown(reason) {
   finished = true;
   clearInterval(thermalTimer);
   clearTimeout(runtimeTimer);
+  if (reconnectTimer) clearTimeout(reconnectTimer);
   stopWorkers();
   console.log(reason);
   // Allow workers to leave their current Scrypt call and report final counters.
@@ -307,23 +310,52 @@ try {
   console.log('WARNING: Termux cannot read thermal sensors. Monitor temperature externally; this session will stop automatically after its time limit.');
 }
 
-socket = net.createConnection({ host: parsed.hostname, port: Number(parsed.port) });
-socket.setEncoding('utf8');
-socket.on('connect', () => {
-  startedAt = Date.now();
-  console.log('Connected to Mining-Dutch. Subscribing...');
-  send('mining.subscribe', ['PEP-Miner-Cluster/0.3']);
-});
-socket.on('data', onData);
-socket.on('error', error => {
-  console.error('Stratum socket error:', error.message);
-  shutdown('Pool connection failed.');
-});
-socket.on('close', () => {
-  if (!finished) shutdown('Pool connection closed.');
-});
+function scheduleReconnect(reason) {
+  if (finished || reconnectTimer) return;
+  console.log(reason);
+  stopWorkers();
+  activeJobId = null;
+  authorized = false;
+  subscription = null;
+  currentJobParams = null;
+  pending.clear();
+  inputBuffer = '';
+  extranonceCounter = 0n;
+  const delay = reconnectDelayMs;
+  reconnectDelayMs = Math.min(reconnectDelayMs * 2, 30000);
+  console.log('Reconnecting to the same Mining-Dutch endpoint in ' + (delay / 1000) + 's.');
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    connectPool();
+  }, delay);
+}
+
+function connectPool() {
+  if (finished) return;
+  const connection = net.createConnection({ host: parsed.hostname, port: Number(parsed.port) });
+  socket = connection;
+  connection.setEncoding('utf8');
+  connection.on('connect', () => {
+    if (socket !== connection || finished) return;
+    if (!startedAt) startedAt = Date.now();
+    reconnectDelayMs = 1000;
+    console.log('Connected to Mining-Dutch. Subscribing...');
+    send('mining.subscribe', ['PEP-Miner-Cluster/0.3']);
+  });
+  connection.on('data', chunk => {
+    if (socket === connection && !finished) onData(chunk);
+  });
+  connection.on('error', error => {
+    if (socket === connection && !finished) console.error('Stratum socket error:', error.message);
+  });
+  connection.on('close', () => {
+    if (socket === connection && !finished) scheduleReconnect('Pool connection closed.');
+  });
+}
+
 process.on('SIGINT', () => shutdown('Stopped by user.'));
 process.on('SIGTERM', () => shutdown('Stopped by system.'));
+connectPool();
 const statsTimer = setInterval(() => {
   if (finished) return clearInterval(statsTimer);
   reportStats();
