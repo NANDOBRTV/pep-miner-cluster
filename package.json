@@ -6,7 +6,8 @@
   "type": "commonjs",
   "scripts": {
     "dashboard": "node dashboard/server.js",
-    "check": "node --check dashboard/server.js"
+    "check": "node --check dashboard/server.js && node --check miner/stratum-probe.js",
+    "pool:check": "node miner/stratum-probe.js"
   },
   "engines": {
     "node": ">=20"
