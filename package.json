@@ -6,13 +6,14 @@
   "type": "commonjs",
   "scripts": {
     "dashboard": "node dashboard/server.js",
-    "check": "node --check dashboard/server.js && node --check miner/stratum-probe.js && node --check miner/stratum-inspect.js && node --check miner/device-profile.js && node --check miner/scrypt-bench.js && node --check miner/pep-pow.js && node --check miner/pep-pow.test.js && node --check miner/scrypt-worker.js && node --check miner/stratum-miner.js",
+    "check": "node --check dashboard/server.js && node --check miner/stratum-probe.js && node --check miner/stratum-inspect.js && node --check miner/device-profile.js && node --check miner/scrypt-bench.js && node --check miner/pep-pow.js && node --check miner/pep-pow.test.js && node --check miner/scrypt-worker.js && node --check miner/stratum-miner.js && node --check miner/stratum-sim.test.js",
     "pool:check": "node miner/stratum-probe.js",
     "pool:inspect": "node miner/stratum-inspect.js",
     "device:profile": "node miner/device-profile.js",
     "bench:scrypt": "node miner/scrypt-bench.js",
     "test:pow": "node miner/pep-pow.test.js",
-    "mine": "node miner/stratum-miner.js"
+    "mine": "node miner/stratum-miner.js",
+    "test:stratum": "node miner/stratum-sim.test.js"
   },
   "engines": {
     "node": ">=20"
