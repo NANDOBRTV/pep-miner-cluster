@@ -83,7 +83,7 @@ function renderPanel() {
     '╔' + line + '╗',
     row('PEP MINER CLUSTER  •  MINING-DUTCH SOLO'),
     '╠' + line + '╣',
-    row('CONEXÃO   ' + stateColor + connectionState.toUpperCase() + reset),
+    row('CONEXÃO   ' + stateColor + stateLabel + reset),
     row('POOL      ' + parsed.hostname + ':' + parsed.port),
     row('WORKER    ' + workerId),
     '╠' + line + '╣',
