@@ -33,7 +33,7 @@ Remaining milestones:
 
 1. Confirm a real accepted share from Mining-Dutch and verify prevhash/Merkle byte order.
 2. Optimize the Scrypt engine for Android ARM64 while retaining known-answer tests.
-3. Measure sustained PEP hashrate on the phone and report counters to the cluster dashboard.
+3. Measure sustained PEP hashrate on the phone and validate telemetry over longer sessions.
 4. Expand Android thermal safeguards for devices that expose readable sensors.
 
 Mining-Dutch documents `d=` as a password argument for requesting a static share difficulty. For this phone's low CPU hashrate, set `pool.password` in the private local `config/config.json` to `d=1` for the first accepted-share test. The pool may clamp or adjust settings. Do not confuse a share target with the network block target. A TCP connection and successful Stratum authorization alone do not mean mining is active.
