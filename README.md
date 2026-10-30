@@ -52,7 +52,7 @@ MINE_THREADS=8 MINE_SECONDS=120 npm run mine
 
 O padrão é 120 segundos; cada sessão é limitada a no máximo 600 segundos. Se o Termux conseguir ler sensores térmicos, o minerador para ao atingir 42 °C. Neste aparelho os sensores não apareceram para o Termux, então monitore a temperatura externamente e interrompa a sessão se aquecer demais. Nenhum limite térmico, frequência ou governor do Android é alterado.
 
-O minerador mostra hashes calculados, hashrate medido, shares submetidas, aceitas e rejeitadas. Só conta uma share como aceita quando a Mining-Dutch responde positivamente. Se a conexão cair, tenta reconectar ao mesmo endpoint com espera progressiva.
+Quando iniciado em um terminal interativo do Termux, o minerador usa um painel de tela única que atualiza a cada segundo: conexão, hashrate, hashes, threads, tempo e shares enviadas/aceitas/rejeitadas. Use `Ctrl+C` para encerrar. Quando a saída é redirecionada (sem TTY), mantém logs em texto para diagnóstico. O minerador mede hashes calculados, hashrate e shares submetidas, aceitas e rejeitadas. Só conta uma share como aceita quando a Mining-Dutch responde positivamente. Se a conexão cair, tenta reconectar ao mesmo endpoint com espera progressiva.
 
 ## Painel
 
