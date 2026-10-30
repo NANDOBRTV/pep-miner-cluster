@@ -322,6 +322,8 @@ socket.on('error', error => {
 socket.on('close', () => {
   if (!finished) shutdown('Pool connection closed.');
 });
+process.on('SIGINT', () => shutdown('Stopped by user.'));
+process.on('SIGTERM', () => shutdown('Stopped by system.'));
 const statsTimer = setInterval(() => {
   if (finished) return clearInterval(statsTimer);
   reportStats();
