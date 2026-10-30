@@ -50,7 +50,7 @@ const detectedCpus = (() => {
   } catch { return os.cpus().length || 1; }
 })();
 const threads = Math.max(1, Math.min(8, Number(process.env.MINE_THREADS) || Number(mining.threads) || detectedCpus || 1));
-const maxRuntimeSeconds = Math.max(30, Math.min(600, Number(process.env.MINE_SECONDS) || 120));
+const maxRuntimeSeconds = Math.max(30, Math.min(600, Number(process.env.MINE_SECONDS) || Number(mining.max_runtime_seconds) || 120));
 const THERMAL_STOP_C = 42;
 
 let socket;
