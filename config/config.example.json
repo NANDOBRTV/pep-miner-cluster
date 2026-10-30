@@ -19,7 +19,7 @@
     "This is a device-tested endpoint, not a claim that it is the pool's universal default. The public PEP page lists regional endpoints on port 3407, which refused connections from this device.",
     "Use the exact Mining-Dutch account username followed by .workername.",
     "Select PEP and configure the payout wallet in the Mining-Dutch account dashboard.",
-    "This repository still does not contain a working Scrypt mining engine. Authorization does not calculate hashes or submit shares.",
+    "The repository includes a first Stratum Scrypt miner; real accepted shares from this device still need to be verified.",
     "Never commit passwords, API keys, wallet private keys, or seed phrases."
   ]
 }
