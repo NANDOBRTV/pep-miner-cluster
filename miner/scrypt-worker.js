@@ -1,9 +1,11 @@
 'use strict';
 
 const { parentPort, workerData } = require('node:worker_threads');
-const { headerWithNonce, scrypt1024, hashMeetsTarget, hashToDisplayHex } = require('./pep-pow');
+const { scrypt1024, hashMeetsTarget, hashToDisplayHex } = require('./pep-pow');
 
 const prefix = Buffer.from(workerData.headerPrefix, 'hex');
+const header = Buffer.allocUnsafe(80);
+prefix.copy(header, 0);
 const target = BigInt('0x' + workerData.targetHex);
 const networkTarget = BigInt('0x' + workerData.networkTargetHex);
 const nonceCounter = new BigUint64Array(workerData.nonceCounter);
@@ -22,7 +24,7 @@ try {
       break;
     }
     const nonce = Number(allocated);
-    const header = headerWithNonce(prefix, nonce);
+    header.writeUInt32LE(nonce, 76);
     const hash = scrypt1024(header);
     hashes++;
 
