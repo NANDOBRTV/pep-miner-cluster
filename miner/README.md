@@ -23,20 +23,31 @@ Select PEP and configure the PEP payout wallet in the Mining-Dutch account dashb
 
 ## Implementation status
 
-The dashboard is a monitor and `miner/stratum-probe.js` is a diagnostic only. **No Scrypt mining engine or share-submission client is implemented yet.**
+The dashboard is a monitor and `miner/stratum-probe.js` is a diagnostic only. The repository now contains `miner/pep-pow.js`, which implements PEP's 80-byte pure-header serialization helpers, coinbase/Merkle construction, compact network-target decoding, and the Scrypt 1024/1/1/256 primitive.
+
+The Scrypt primitive is checked against all five known-answer vectors in Pepecoin Core's `src/test/scrypt_tests.cpp`. Run `npm run test:pow` in Termux. These tests validate the hash primitive and local byte-layout helpers; they do not yet validate Mining-Dutch's exact Stratum prevhash representation, submit shares, or constitute a running miner.
+
+**The Stratum mining loop and share-submission client are not implemented yet.**
 
 Remaining milestones:
 
-1. Receive and parse Stratum mining jobs and difficulty notifications.
-2. Confirm exact PEP Scrypt parameters, serialization, target, and byte order.
-3. Implement Scrypt hashing with known-answer tests on Android ARM64.
-4. Submit correctly computed shares and count only actual accepted/rejected responses.
-5. Measure local hashrate and report real counters to the cluster dashboard.
+1. Confirm Mining-Dutch's exact Stratum prevhash and Merkle-branch byte order using a real captured job and an independently reconstructed block header.
+2. Confirm pool share-difficulty target semantics for its Scrypt PEP endpoint.
+3. Implement the Stratum mining loop and nonce/extranonce scheduling.
+4. Submit only shares that pass the local share-target check; count actual pool accept/reject replies.
+5. Measure real PEP Scrypt hashrate and report real counters to the cluster dashboard.
 6. Add reconnect/backoff, graceful stop, and Android thermal safeguards.
 
 A TCP connection and successful Stratum authorization alone do not mean mining is active.
 
 ## Android ARM64 performance preparation
+
+Run the consensus known-answer tests in Termux:
+
+```bash
+npm run check
+npm run test:pow
+```
 
 Run the read-only device profile in Termux:
 
