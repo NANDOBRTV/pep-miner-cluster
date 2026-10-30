@@ -56,7 +56,7 @@ After updating the repository, run:
 npm run bench:scrypt
 ```
 
-The benchmark uses Node's OpenSSL-backed Scrypt primitive with parameters N=1024, r=1, p=1 and a fixed 80-byte test input. It tests thread counts from 1 up to the detected logical CPU count, with short runs and cooldowns. It checks readable Android thermal zones and stops at 42 °C by default. Optional environment settings: `BENCH_MS` (1000–8000), `COOLDOWN_MS` (2000–15000), `MAX_TEMP_C` (38–50), and `MAX_THREADS` (1–logical CPU count).
+The benchmark uses Node's OpenSSL-backed Scrypt primitive with parameters N=1024, r=1, p=1 and a fixed 80-byte test input. It tests thread counts from 1 up to the detected logical CPU count, with short runs and cooldowns. It checks readable Android thermal zones and stops at 42 °C by default. Optional environment settings: `BENCH_MS` (1000–8000), `COOLDOWN_MS` (2000–15000), and `MAX_THREADS` (1–logical CPU count).
 
 If Android does not expose thermal zones to Termux, the script warns that automatic thermal stopping is unavailable. Monitor the device independently and stop the test if it becomes uncomfortably hot.
 
