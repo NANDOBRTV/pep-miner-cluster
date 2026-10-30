@@ -49,6 +49,21 @@ function computeMerkleRoot(coinbase, branches) {
   return root;
 }
 
+function stratumPrevhashToHeader(prevHash) {
+  const bytes = decodeHex(prevHash, 32, 'Stratum prevHash');
+  // Stratum V1 sends prevhash as eight little-endian 32-bit words.
+  // Reverse bytes inside each 4-byte word to obtain serialized header bytes.
+  for (let offset = 0; offset < 32; offset += 4) {
+    const a = bytes[offset];
+    const b = bytes[offset + 1];
+    bytes[offset] = bytes[offset + 3];
+    bytes[offset + 1] = bytes[offset + 2];
+    bytes[offset + 2] = b;
+    bytes[offset + 3] = a;
+  }
+  return bytes;
+}
+
 function buildHeader({ version, prevHash, merkleRoot, ntime, nbits, nonce }) {
   // prevHash and merkleRoot must already be in serialized uint256/internal byte order.
   const header = Buffer.concat([
@@ -73,10 +88,10 @@ function prepareStratumJob(params, extranonce1, extranonce2) {
   const coinbase = buildCoinbase(coinbasePrefix, extranonce1, extranonce2, coinbaseSuffix);
   const merkleRoot = computeMerkleRoot(coinbase, branches);
   // Stratum V1 version/ntime/nbits are numeric hex fields; serialize as LE.
-  // prevHash and the resulting SHA256d Merkle root are already internal uint256 bytes.
+  // prevHash is word-swapped by Stratum and must be normalized; SHA256d Merkle bytes are internal.
   const headerPrefix = Buffer.concat([
     uint32HexToLE(version, 'version'),
-    decodeHex(prevHash, 32, 'prevHash'),
+    stratumPrevhashToHeader(prevHash),
     merkleRoot,
     uint32HexToLE(ntime, 'ntime'),
     uint32HexToLE(nbits, 'nbits')
@@ -177,6 +192,7 @@ module.exports = {
   buildCoinbase,
   computeMerkleRoot,
   buildHeader,
+  stratumPrevhashToHeader,
   prepareStratumJob,
   headerWithNonce,
   nonceToStratumHex,
