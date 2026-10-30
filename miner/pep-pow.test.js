@@ -6,6 +6,7 @@ const {
   buildHeader,
   prepareStratumJob,
   headerWithNonce,
+  nonceToStratumHex,
   scrypt1024,
   hashToDisplayHex,
   compactToTarget,
@@ -66,6 +67,7 @@ assert.equal(prepared.headerPrefix.subarray(0, 4).toString('hex'), '02000020');
 assert.equal(prepared.headerPrefix.subarray(4, 36).toString('hex'), '33'.repeat(32));
 assert.equal(headerWithNonce(prepared.headerPrefix, 0x12345678).length, 80);
 assert.equal(headerWithNonce(prepared.headerPrefix, 0x12345678).subarray(76).toString('hex'), '78563412');
+assert.equal(nonceToStratumHex(0x12345678), '78563412');
 
 const coinbase = buildCoinbase('0102', 'aabb', '00000001', '0304');
 assert.equal(coinbase.toString('hex'), '0102aabb000000010304');
