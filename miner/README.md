@@ -27,7 +27,7 @@ The dashboard is a monitor. The repository now contains `miner/pep-pow.js` for P
 
 The Scrypt primitive is checked against all five known-answer vectors in Pepecoin Core's `src/test/scrypt_tests.cpp`. Run `npm run test:pow` in Termux. The module also calculates the Scrypt Stratum share target from the pool difficulty using the Scrypt difficulty-1 target. The tests validate the primitive and local layout helpers, but not the live pool's exact byte-order conventions.
 
-The Stratum miner is an initial implementation. Its JSON-RPC/Stratum handshake, job handling, worker hashing path, `mining.submit` payload, and accepted/rejected response handling passed a local simulated-pool test. It has **not yet been verified against an accepted share from the real Mining-Dutch pool**. Do not treat a successful connection or local hash count as proof that the pool accepted work.
+The Stratum miner is an initial implementation. Its JSON-RPC/Stratum handshake, job handling, worker hashing path, `mining.submit` payload, and accepted/rejected response handling passed the reproducible localhost test `npm run test:stratum`. It has **not yet been verified against an accepted share from the real Mining-Dutch pool**. Do not treat a successful connection or local hash count as proof that the pool accepted work.
 
 Remaining milestones:
 
@@ -59,6 +59,7 @@ Run the consensus known-answer tests in Termux:
 ```bash
 npm run check
 npm run test:pow
+npm run test:stratum
 ```
 
 Run the read-only device profile in Termux:
