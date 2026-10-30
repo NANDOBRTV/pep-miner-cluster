@@ -95,10 +95,9 @@ function makeExtranonce2(size, counter) {
 }
 
 function stopWorkers() {
+  // Ask workers to finish their current Scrypt call and flush their final hash count.
   if (stopFlag) Atomics.store(new Int32Array(stopFlag), 0, 1);
-  const workers = activeWorkers;
   activeWorkers = [];
-  for (const worker of workers) worker.terminate().catch(() => {});
 }
 
 function startWorkers(job) {
@@ -202,9 +201,12 @@ function shutdown(reason) {
   clearTimeout(runtimeTimer);
   stopWorkers();
   console.log(reason);
-  reportStats();
-  if (socket && !socket.destroyed) socket.end();
-  setTimeout(() => process.exit(0), 300).unref();
+  // Allow workers to leave their current Scrypt call and report final counters.
+  setTimeout(() => {
+    reportStats();
+    if (socket && !socket.destroyed) socket.end();
+    process.exit(0);
+  }, 500);
 }
 
 function handleMessage(message) {
