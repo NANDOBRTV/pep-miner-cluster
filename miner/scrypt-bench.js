@@ -10,7 +10,7 @@ const path = require('node:path');
 
 const DURATION_MS = Math.max(1000, Math.min(8000, Number(process.env.BENCH_MS) || 3000));
 const COOLDOWN_MS = Math.max(2000, Math.min(15000, Number(process.env.COOLDOWN_MS) || 5000));
-const LIMIT_C = Math.max(38, Math.min(50, Number(process.env.MAX_TEMP_C) || 42));
+const LIMIT_C = 42; // Fixed safety stop; do not raise this in the benchmark.
 const MAX_THREADS = Math.max(1, Math.min(os.cpus().length, Number(process.env.MAX_THREADS) || os.cpus().length));
 const HEADER = Buffer.from(Array.from({ length: 80 }, (_, i) => (i * 37 + 11) & 255));
 
