@@ -4,6 +4,8 @@
 const assert = require('node:assert/strict');
 const {
   buildHeader,
+  prepareStratumJob,
+  headerWithNonce,
   scrypt1024,
   hashToDisplayHex,
   compactToTarget,
@@ -45,6 +47,25 @@ assert.equal(header.subarray(36, 68).toString('hex'), '22'.repeat(32));
 assert.equal(header.subarray(68, 72).toString('hex'), 'cbb1e46a');
 assert.equal(header.subarray(72, 76).toString('hex'), '93cc411a');
 assert.equal(header.subarray(76, 80).toString('hex'), '01000000');
+
+const prepared = prepareStratumJob([
+  'job-test',
+  '33'.repeat(32),
+  '0102',
+  '0304',
+  [],
+  '20000002',
+  '1a41cc93',
+  '6ae4b1cb',
+  true
+], 'aabb', '00000001');
+assert.equal(prepared.jobId, 'job-test');
+assert.equal(prepared.cleanJobs, true);
+assert.equal(prepared.headerPrefix.length, 76);
+assert.equal(prepared.headerPrefix.subarray(0, 4).toString('hex'), '02000020');
+assert.equal(prepared.headerPrefix.subarray(4, 36).toString('hex'), '33'.repeat(32));
+assert.equal(headerWithNonce(prepared.headerPrefix, 0x12345678).length, 80);
+assert.equal(headerWithNonce(prepared.headerPrefix, 0x12345678).subarray(76).toString('hex'), '78563412');
 
 const coinbase = buildCoinbase('0102', 'aabb', '00000001', '0304');
 assert.equal(coinbase.toString('hex'), '0102aabb000000010304');
