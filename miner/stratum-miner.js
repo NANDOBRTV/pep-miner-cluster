@@ -214,7 +214,7 @@ function startWorkers(job) {
         const requestId = send('mining.submit', [pool.username, message.jobId, message.extranonce2, message.ntime, nonceHex]);
         if (requestId === null) return;
         submittedShares++;
-        console.log('Share submitted:', message.hash, 'nonce:', nonceHex, message.blockCandidate ? 'NETWORK BLOCK TARGET MET' : '');
+        note('Share enviada: ' + message.hash + ' | nonce ' + nonceHex + (message.blockCandidate ? ' | POSSÍVEL BLOCO' : ''));
       } else if (message.type === 'error') {
         note('ERRO no worker: ' + message.message, true);
         shutdown('Hash worker failed.');
@@ -324,10 +324,12 @@ function shutdown(reason) {
   stopWorkers();
   connectionState = 'stopped';
   note(reason);
+  if (interactivePanel) renderPanel();
   // Allow workers to leave their current Scrypt call and report final counters.
   setTimeout(async () => {
     reportStats();
     await sendTelemetry('stopped');
+    if (interactivePanel) renderPanel();
     if (socket && !socket.destroyed) socket.end();
     process.exit(0);
   }, 500);
