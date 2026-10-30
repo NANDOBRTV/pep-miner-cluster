@@ -55,13 +55,13 @@ O minerador mostra hashes calculados, hashrate medido, shares submetidas, aceita
 
 ## Painel
 
-Inicie o painel local:
+Inicie o painel local em uma sessão do Termux:
 
 ```bash
 bash scripts/start-dashboard.sh
 ```
 
-Abra `http://127.0.0.1:8787` no navegador do celular. A API/painel ainda não recebe automaticamente as métricas do novo minerador; essa integração é uma etapa pendente.
+Abra `http://127.0.0.1:8787` no navegador do celular. Mantenha o painel aberto em uma sessão e inicie o minerador em outra; ele lê o token local gerado pelo painel e envia hashrate, shares aceitas/rejeitadas e estado do worker a cada 10 segundos. Para outro dispositivo, configure `dashboard.url` e `PEP_CLUSTER_TOKEN` usando uma rede privada confiável.
 
 ## Segurança e limitações
 
