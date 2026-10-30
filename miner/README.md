@@ -27,7 +27,7 @@ The dashboard is a monitor. The repository now contains `miner/pep-pow.js` for P
 
 The Scrypt primitive is checked against all five known-answer vectors in Pepecoin Core's `src/test/scrypt_tests.cpp`. Run `npm run test:pow` in Termux. The module also calculates the Scrypt Stratum share target from the pool difficulty using the Scrypt difficulty-1 target. These tests validate the hash primitive and local byte-layout helpers; they do not yet validate Mining-Dutch's exact Stratum prevhash representation, submit shares, or constitute a running miner.
 
-The Stratum miner is an initial implementation and has **not yet been verified against an accepted share from Mining-Dutch**. Do not treat a successful connection or local hash count as proof that the pool accepted work.
+The Stratum miner is an initial implementation. Its JSON-RPC/Stratum handshake, job handling, worker hashing path, `mining.submit` payload, and accepted/rejected response handling passed a local simulated-pool test. It has **not yet been verified against an accepted share from the real Mining-Dutch pool**. Do not treat a successful connection or local hash count as proof that the pool accepted work.
 
 Remaining milestones:
 
