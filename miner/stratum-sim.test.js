@@ -129,7 +129,7 @@ server.listen(0, '127.0.0.1', () => {
       try {
         assert.equal(code, 0, 'miner process should exit cleanly');
         assert.equal(sawSubmit, true, 'miner should submit at least one share');
-        assert.match(childOutput, /Share ACCEPTED by Mining-Dutch\./);
+        assert.match(childOutput, /Share aceita pela Mining-Dutch\./);
         assert.equal(telemetryReceived, true, 'miner should post stopped telemetry to dashboard');
         finish(null);
       } catch (error) {
