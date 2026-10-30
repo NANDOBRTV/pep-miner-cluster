@@ -28,7 +28,7 @@ const pool = config.pool || {};
 const mining = config.mining || {};
 const dashboard = config.dashboard || {};
 const dashboardUrl = dashboard.url || 'http://127.0.0.1:8787';
-const workerId = String(dashboard.worker_id || mining.worker_id || 'android-main').replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 40) || 'android-main';
+const workerId = String(dashboard.worker_id || mining.worker_id || pool.username || 'android-main').replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 40) || 'android-main';
 const deviceName = String(dashboard.device || mining.device || 'Android ARM64').slice(0, 80);
 let dashboardToken = process.env.PEP_CLUSTER_TOKEN || '';
 if (!dashboardToken) {
