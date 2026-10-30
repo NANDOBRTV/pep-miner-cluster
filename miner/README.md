@@ -31,12 +31,10 @@ The Stratum miner is an initial implementation. Its JSON-RPC/Stratum handshake, 
 
 Remaining milestones:
 
-1. Validate the assembled header against Mining-Dutch by obtaining a real accepted share; confirm prevhash and Merkle byte order.
-2. Confirm pool share-difficulty handling from actual accept/reject responses.
-3. Confirm a real accepted share and verify the pool's prevhash/Merkle byte order.
-4. Optimize the Scrypt engine for Android ARM64 while retaining known-answer tests.
-5. Measure sustained PEP hashrate on the phone and report counters to the cluster dashboard.
-6. Expand Android thermal safeguards for devices that expose readable sensors.
+1. Confirm a real accepted share from Mining-Dutch and verify prevhash/Merkle byte order.
+2. Optimize the Scrypt engine for Android ARM64 while retaining known-answer tests.
+3. Measure sustained PEP hashrate on the phone and report counters to the cluster dashboard.
+4. Expand Android thermal safeguards for devices that expose readable sensors.
 
 Mining-Dutch documents `d=` as a password argument for requesting a static share difficulty. For this phone's low CPU hashrate, set `pool.password` in the private local `config/config.json` to `d=1` for the first accepted-share test. The pool may clamp or adjust settings. Do not confuse a share target with the network block target. A TCP connection and successful Stratum authorization alone do not mean mining is active.
 
