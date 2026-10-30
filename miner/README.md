@@ -23,7 +23,7 @@ Select PEP and configure the PEP payout wallet in the Mining-Dutch account dashb
 
 ## Implementation status
 
-The dashboard is a monitor. The repository now contains `miner/pep-pow.js` for PEP's 80-byte pure-header serialization, coinbase/Merkle construction, compact network-target decoding, Scrypt share-target math, and the Scrypt 1024/1/1/256 primitive. It also contains a first bounded Stratum V1 miner (`miner/stratum-miner.js`) with worker threads, nonce allocation, share submission, accepted/rejected counters, reconnect with exponential backoff, and a 120-second default runtime limit.
+The dashboard receives optional worker telemetry from the miner when its local token is available. The repository now contains `miner/pep-pow.js` for PEP's 80-byte pure-header serialization, coinbase/Merkle construction, compact network-target decoding, Scrypt share-target math, and the Scrypt 1024/1/1/256 primitive. It also contains a first bounded Stratum V1 miner (`miner/stratum-miner.js`) with worker threads, nonce allocation, share submission, accepted/rejected counters, reconnect with exponential backoff, and a 120-second default runtime limit.
 
 The Scrypt primitive is checked against all five known-answer vectors in Pepecoin Core's `src/test/scrypt_tests.cpp`. Run `npm run test:pow` in Termux. The module also calculates the Scrypt Stratum share target from the pool difficulty using the Scrypt difficulty-1 target. The tests validate the primitive and local layout helpers, but not the live pool's exact byte-order conventions.
 
@@ -48,7 +48,7 @@ MINE_THREADS=8 MINE_SECONDS=120 npm run mine
 
 The miner defaults to 120 seconds and caps one run at 600 seconds. If readable thermal sensors are exposed, it stops at 42 °C. This Android device previously exposed no thermal zones to Termux, so keep an external temperature monitor visible and stop the run if the phone becomes too hot. Android thermal protections are not modified.
 
-The miner reports local hashes/second, submitted shares, and actual accepted/rejected pool responses. It does not claim a share was accepted until Mining-Dutch replies `result: true`. The miner reconnects to the same Mining-Dutch endpoint with exponential backoff after a dropped socket.
+The miner reports local hashes/second, submitted shares, and actual accepted/rejected pool responses. When the dashboard is running in another Termux session, it also posts worker telemetry every 10 seconds using the token file created by `scripts/start-dashboard.sh`. It does not claim a share was accepted until Mining-Dutch replies `result: true`. The miner reconnects to the same Mining-Dutch endpoint with exponential backoff after a dropped socket.
 
 ## Android ARM64 performance preparation
 
