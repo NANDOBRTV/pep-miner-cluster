@@ -346,6 +346,7 @@ function onData(chunk) {
 console.log('PEP Scrypt miner — Mining-Dutch SOLO only');
 console.log('Endpoint:', parsed.hostname + ':' + parsed.port);
 console.log('Threads:', threads, '| Session limit:', maxRuntimeSeconds, 'seconds');
+if (!dashboardToken) console.log('Dashboard telemetry disabled: start the dashboard first to create its local token.');
 console.log('Safety: stop at 42 °C when a readable sensor exists; Android thermal controls are untouched.');
 try {
   const zones = fs.readdirSync('/sys/class/thermal').filter(name => /^thermal_zone\d+$/.test(name));
