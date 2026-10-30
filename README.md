@@ -62,7 +62,7 @@ Inicie o painel local em uma sessão do Termux:
 bash scripts/start-dashboard.sh
 ```
 
-Abra `http://127.0.0.1:8787` no navegador do celular. Mantenha o painel aberto em uma sessão e inicie o minerador em outra; ele lê o token local gerado pelo painel e envia hashrate, shares aceitas/rejeitadas e estado do worker a cada 10 segundos. Para outro dispositivo, configure `dashboard.url`, `PEP_CLUSTER_TOKEN` e um `dashboard.worker_id` exclusivo em cada aparelho, usando uma rede privada confiável.
+Abra `http://127.0.0.1:8787` no navegador do celular. Para entrar no painel, veja o token local com `cat ~/.config/pep-miner-cluster/token` e cole-o no campo de autenticação — não compartilhe esse token. Mantenha o painel aberto em uma sessão e inicie o minerador em outra; ele lê o mesmo arquivo automaticamente e envia hashrate, shares aceitas/rejeitadas e estado do worker a cada 10 segundos. Para outro dispositivo, configure `dashboard.url`, `PEP_CLUSTER_TOKEN` e um `dashboard.worker_id` exclusivo em cada aparelho, usando uma rede privada confiável.
 
 ## Segurança e limitações
 
