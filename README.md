@@ -24,7 +24,7 @@ O endpoint testado no Android foi:
 stratum+tcp://brazil.mining-dutch.nl:8888
 ```
 
-A configuração privada fica em `config/config.json`, ignorada pelo Git. Use o usuário Mining-Dutch no formato `conta.worker1`, e configure a carteira PEP de pagamento no painel da pool. Para o primeiro teste neste aparelho, use `d=1` como senha do worker para solicitar dificuldade de share baixa; a pool pode ajustar esse valor.
+A configuração privada fica em `config/config.json`, ignorada pelo Git. Use o usuário Mining-Dutch no formato `conta.worker1`, e configure a carteira PEP de pagamento no painel da pool. Para o diagnóstico inicial, use `d=1` como senha do worker para solicitar dificuldade de share baixa; isso é uma dificuldade estática. Depois de validar as primeiras shares aceitas, remova `d=1` se quiser deixar a pool gerenciar automaticamente a dificuldade. Shares não são blocos nem garantem recompensa em SOLO.
 
 Nunca envie nem publique senha da pool, API key, seed phrase ou chave privada.
 
