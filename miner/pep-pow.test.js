@@ -54,7 +54,7 @@ assert.equal(stratumPrevhashToHeader('000102030405060708090a0b0c0d0e0f1011121314
 
 const prepared = prepareStratumJob([
   'job-test',
-  '${prev}',
+  '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
   '0102',
   '0304',
   [],
