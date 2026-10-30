@@ -26,6 +26,17 @@ try {
 
 const pool = config.pool || {};
 const mining = config.mining || {};
+const dashboard = config.dashboard || {};
+const dashboardUrl = dashboard.url || 'http://127.0.0.1:8787';
+const workerId = String(dashboard.worker_id || mining.worker_id || 'android-main').replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 40) || 'android-main';
+const deviceName = String(dashboard.device || mining.device || 'Android ARM64').slice(0, 80);
+let dashboardToken = process.env.PEP_CLUSTER_TOKEN || '';
+if (!dashboardToken) {
+  try {
+    dashboardToken = fs.readFileSync(path.join(os.homedir(), '.config', 'pep-miner-cluster', 'token'), 'utf8').trim();
+  } catch {}
+}
+let telemetryWarningShown = false;
 let parsed;
 try { parsed = new URL(pool.url); } catch {
   console.error('Invalid pool.url in config/config.json');
@@ -185,6 +196,36 @@ function checkThermal() {
   if (max >= THERMAL_STOP_C) shutdown('Thermal safety stop at ' + max.toFixed(1) + ' °C.');
 }
 
+async function sendTelemetry(statusOverride) {
+  if (!dashboardToken) return;
+  try {
+    const elapsed = startedAt ? Math.max(1, (Date.now() - startedAt) / 1000) : 1;
+    const body = {
+      workerId,
+      device: deviceName,
+      status: statusOverride || (activeJobId ? 'mining' : authorized ? 'connected' : 'connecting'),
+      hashrateH: Number((totalHashes / elapsed).toFixed(2)),
+      accepted: acceptedShares,
+      rejected: rejectedShares
+    };
+    const response = await fetch(new URL('/api/workers', dashboardUrl), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'X-Cluster-Token': dashboardToken },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(2500)
+    });
+    if (!response.ok && !telemetryWarningShown) {
+      telemetryWarningShown = true;
+      console.warn('Dashboard telemetry unavailable: HTTP ' + response.status);
+    }
+  } catch (error) {
+    if (!telemetryWarningShown) {
+      telemetryWarningShown = true;
+      console.warn('Dashboard telemetry unavailable:', error.message);
+    }
+  }
+}
+
 function reportStats() {
   const elapsed = startedAt ? (Date.now() - startedAt) / 1000 : 0;
   const rate = elapsed > 0 ? totalHashes / elapsed : 0;
@@ -204,9 +245,11 @@ function shutdown(reason) {
   clearInterval(thermalTimer);
   clearTimeout(runtimeTimer);
   if (reconnectTimer) clearTimeout(reconnectTimer);
+  clearInterval(telemetryTimer);
   stopWorkers();
   console.log(reason);
   // Allow workers to leave their current Scrypt call and report final counters.
+  sendTelemetry('stopped');
   setTimeout(() => {
     reportStats();
     if (socket && !socket.destroyed) socket.end();
@@ -357,6 +400,7 @@ function connectPool() {
 process.on('SIGINT', () => shutdown('Stopped by user.'));
 process.on('SIGTERM', () => shutdown('Stopped by system.'));
 connectPool();
+const telemetryTimer = setInterval(() => { sendTelemetry(); }, 10000);
 const statsTimer = setInterval(() => {
   if (finished) return clearInterval(statsTimer);
   reportStats();
