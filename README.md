@@ -11,7 +11,8 @@ Projeto para mineração PEP em Android ARM64/Termux, usando **somente Mining-Du
 - [x] Minerador Stratum V1 multithread com envio de shares e contadores de aceitas/rejeitadas.
 - [x] Teste de integração local com pool simulado e reconexão com backoff.
 - [ ] Confirmar share aceita pela Mining-Dutch real e validar definitivamente a ordem dos bytes do job.
-- [ ] Otimização nativa ARM64 e integração da telemetria real com o painel.
+- [x] Envio opcional da telemetria real do minerador para o painel local.
+- [ ] Otimização nativa ARM64 e confirmação da estabilidade em mineração contínua.
 
 **Transparência:** o código de mineração já existe e passou por testes locais, mas ainda não foi confirmado um share aceito pela pool real. Não considere conexão/autorização ou hashrate local como prova de mineração validada.
 
