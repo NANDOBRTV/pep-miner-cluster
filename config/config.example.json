@@ -21,5 +21,10 @@
     "Select PEP and configure the payout wallet in the Mining-Dutch account dashboard.",
     "The repository includes a first Stratum Scrypt miner; real accepted shares from this device still need to be verified.",
     "Never commit passwords, API keys, wallet private keys, or seed phrases."
-  ]
+  ],
+  "dashboard": {
+    "url": "http://127.0.0.1:8787",
+    "worker_id": "android-main",
+    "device": "Android ARM64"
+  }
 }
