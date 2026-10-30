@@ -4,20 +4,21 @@
   "algorithm": "scrypt",
   "pool": {
     "provider": "Mining-Dutch",
-    "url": "stratum+tcp://americas.mining-dutch.nl:3407",
+    "url": "stratum+tcp://brazil.mining-dutch.nl:8888",
     "username": "YOUR_MINING_DUTCH_USERNAME.worker1",
     "password": "x",
-    "region": "americas"
+    "region": "brazil"
   },
   "mining": {
     "threads": 2,
     "thermal_limit_celsius": 42
   },
   "notes": [
-    "Mining-Dutch PEP pool uses Scrypt and pays natively in PEP when PEP is selected in the Mining-Dutch account dashboard.",
-    "Use the exact account username followed by .workername; replace the placeholder above.",
-    "The official pool page currently documents port 3407 and password x. The previously used india.mining-dutch.nl:8888 endpoint is not the endpoint documented on that page.",
-    "This file is a template. Do not commit passwords, API keys, wallet private keys, or seed phrases.",
-    "The repository still does not contain a working Scrypt mining engine; this configuration alone does not mine."
+    "The user successfully tested TCP, Stratum subscribe, and authorization on brazil.mining-dutch.nl:8888 from their Android device on 2026-10-30.",
+    "This is a device-tested endpoint, not a claim that it is the pool's universal default. The public PEP page lists regional endpoints on port 3407, which refused connections from this device.",
+    "Use the exact Mining-Dutch account username followed by .workername.",
+    "Select PEP and configure the payout wallet in the Mining-Dutch account dashboard.",
+    "This repository still does not contain a working Scrypt mining engine. Authorization does not calculate hashes or submit shares.",
+    "Never commit passwords, API keys, wallet private keys, or seed phrases."
   ]
 }
