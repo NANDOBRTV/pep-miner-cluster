@@ -63,6 +63,50 @@ function buildHeader({ version, prevHash, merkleRoot, ntime, nbits, nonce }) {
   return header;
 }
 
+function prepareStratumJob(params, extranonce1, extranonce2) {
+  if (!Array.isArray(params) || params.length < 9) {
+    throw new TypeError('mining.notify must contain the nine Stratum V1 job fields.');
+  }
+  const [jobId, prevHash, coinbasePrefix, coinbaseSuffix, branches, version, nbits, ntime, cleanJobs] = params;
+  if (typeof jobId !== 'string' || !jobId) throw new TypeError('Invalid Stratum job_id.');
+  if (!Array.isArray(branches)) throw new TypeError('Stratum merkle_branch must be an array.');
+  const coinbase = buildCoinbase(coinbasePrefix, extranonce1, extranonce2, coinbaseSuffix);
+  const merkleRoot = computeMerkleRoot(coinbase, branches);
+  // Stratum V1 version/ntime/nbits are numeric hex fields; serialize as LE.
+  // prevHash and the resulting SHA256d Merkle root are already internal uint256 bytes.
+  const headerPrefix = Buffer.concat([
+    uint32HexToLE(version, 'version'),
+    decodeHex(prevHash, 32, 'prevHash'),
+    merkleRoot,
+    uint32HexToLE(ntime, 'ntime'),
+    uint32HexToLE(nbits, 'nbits')
+  ]);
+  if (headerPrefix.length !== 76) throw new Error('PEP Stratum header prefix must be 76 bytes.');
+  return {
+    jobId,
+    extranonce2,
+    ntime,
+    nbits,
+    version,
+    cleanJobs: cleanJobs === true,
+    coinbase,
+    merkleRoot,
+    headerPrefix
+  };
+}
+
+function headerWithNonce(headerPrefix, nonce) {
+  if (!Buffer.isBuffer(headerPrefix) || headerPrefix.length !== 76) {
+    throw new TypeError('headerPrefix must be exactly 76 bytes.');
+  }
+  if (!Number.isInteger(nonce) || nonce < 0 || nonce > 0xffffffff) {
+    throw new RangeError('nonce must be an unsigned 32-bit integer.');
+  }
+  const nonceLE = Buffer.allocUnsafe(4);
+  nonceLE.writeUInt32LE(nonce, 0);
+  return Buffer.concat([headerPrefix, nonceLE]);
+}
+
 function scrypt1024(header) {
   if (!Buffer.isBuffer(header) || header.length !== 80) {
     throw new TypeError('PEP Scrypt input must be an 80-byte serialized block header.');
@@ -124,6 +168,8 @@ module.exports = {
   buildCoinbase,
   computeMerkleRoot,
   buildHeader,
+  prepareStratumJob,
+  headerWithNonce,
   scrypt1024,
   hashToDisplayHex,
   compactToTarget,
