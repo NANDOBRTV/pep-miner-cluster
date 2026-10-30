@@ -11,7 +11,8 @@ const { Worker } = require('node:worker_threads');
 const {
   prepareStratumJob,
   compactToTarget,
-  difficultyToScryptTarget
+  difficultyToScryptTarget,
+  nonceToStratumHex
 } = require('./pep-pow');
 
 const configPath = path.join(__dirname, '..', 'config', 'config.json');
@@ -134,7 +135,7 @@ function startWorkers(job) {
       if (message.type === 'hashes') totalHashes += message.count;
       else if (message.type === 'share') {
         if (message.jobId !== activeJobId || finished) return;
-        const nonceHex = message.nonce.toString(16).padStart(8, '0');
+        const nonceHex = nonceToStratumHex(message.nonce);
         const requestId = send('mining.submit', [pool.username, message.jobId, message.extranonce2, message.ntime, nonceHex]);
         if (requestId === null) return;
         submittedShares++;
