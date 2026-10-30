@@ -1,1 +1,44 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PEP Miner Cluster</title></head><body><h1>PEP Miner Cluster</h1><p>Painel multiworker. Recebe telemetria real dos workers configurados; shares aceitas só são contabilizadas após resposta positiva da pool.</p><input id="token" type="password" placeholder="Token do painel"><button id="go">Conectar</button><pre id="out">Aguardando.</pre><script>document.getElementById('go').onclick=async()=>{const r=await fetch('/api/workers',{headers:{'X-Cluster-Token':document.getElementById('token').value}});document.getElementById('out').textContent=JSON.stringify(await r.json(),null,2)};</script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PEP Miner Cluster</title>
+  <style>
+    body{font-family:system-ui,sans-serif;max-width:900px;margin:2rem auto;padding:0 1rem;background:#10151d;color:#e8edf5}
+    input,button{font:inherit;padding:.7rem;border-radius:.5rem;border:1px solid #566273}
+    input{width:min(100%,28rem);background:#1b2532;color:#fff}
+    button{background:#2c6cbb;color:white;cursor:pointer}
+    pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#1b2532;padding:1rem;border-radius:.6rem}
+  </style>
+</head>
+<body>
+  <h1>PEP Miner Cluster</h1>
+  <p>Telemetria dos workers: hashrate, shares aceitas/rejeitadas e estado da conexão. Atualização automática a cada 5 segundos.</p>
+  <input id="token" type="password" autocomplete="off" placeholder="Token do painel">
+  <button id="go">Conectar</button>
+  <pre id="out">Aguardando autenticação.</pre>
+  <script>
+    const tokenInput = document.getElementById('token');
+    const output = document.getElementById('out');
+    let refreshTimer = null;
+    async function refresh() {
+      try {
+        const response = await fetch('/api/workers', {
+          headers: { 'X-Cluster-Token': tokenInput.value }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || ('HTTP ' + response.status));
+        output.textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        output.textContent = 'Falha ao atualizar: ' + error.message;
+      }
+    }
+    document.getElementById('go').onclick = () => {
+      refresh();
+      if (refreshTimer) clearInterval(refreshTimer);
+      refreshTimer = setInterval(refresh, 5000);
+    };
+  </script>
+</body>
+</html>
