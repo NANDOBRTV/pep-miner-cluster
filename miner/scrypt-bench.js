@@ -11,7 +11,20 @@ const path = require('node:path');
 const DURATION_MS = Math.max(1000, Math.min(8000, Number(process.env.BENCH_MS) || 3000));
 const COOLDOWN_MS = Math.max(2000, Math.min(15000, Number(process.env.COOLDOWN_MS) || 5000));
 const LIMIT_C = 42; // Fixed safety stop; do not raise this in the benchmark.
-const MAX_THREADS = Math.max(1, Math.min(os.cpus().length, Number(process.env.MAX_THREADS) || os.cpus().length));
+function onlineCpuCount() {
+  try {
+    const value = fs.readFileSync('/sys/devices/system/cpu/online', 'utf8').trim();
+    if (!value) return 0;
+    return value.split(',').reduce((total, part) => {
+      const range = part.split('-').map(Number);
+      return total + (range.length === 2 ? range[1] - range[0] + 1 : 1);
+    }, 0);
+  } catch { return 0; }
+}
+const SYSFS_ONLINE_CPUS = onlineCpuCount();
+const OS_CPU_COUNT = os.cpus().length;
+const DETECTED_CPUS = OS_CPU_COUNT > 0 ? OS_CPU_COUNT : SYSFS_ONLINE_CPUS;
+const MAX_THREADS = Math.max(1, Math.min(DETECTED_CPUS || 1, Number(process.env.MAX_THREADS) || DETECTED_CPUS || 1));
 const HEADER = Buffer.from(Array.from({ length: 80 }, (_, i) => (i * 37 + 11) & 255));
 
 function temperatures() {
@@ -64,7 +77,7 @@ async function main() {
     try { return fs.readFileSync('/sys/devices/system/cpu/online', 'utf8').trim(); } catch { return null; }
   })();
   console.log('PEP Scrypt primitive benchmark (not pool mining)');
-  console.log(JSON.stringify({ architecture: os.arch(), logical_cpus: os.cpus().length, online_cpus: online, duration_per_test_ms: DURATION_MS, cooldown_ms: COOLDOWN_MS, thermal_stop_c: LIMIT_C }));
+  console.log(JSON.stringify({ architecture: os.arch(), logical_cpus: DETECTED_CPUS, os_cpus_reported: OS_CPU_COUNT, online_cpu_count: SYSFS_ONLINE_CPUS, online_cpus: online, duration_per_test_ms: DURATION_MS, cooldown_ms: COOLDOWN_MS, thermal_stop_c: LIMIT_C }));
   let best = null;
   for (let threads = 1; threads <= MAX_THREADS; threads++) {
     const before = temperatures();
