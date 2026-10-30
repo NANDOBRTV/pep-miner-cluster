@@ -5,6 +5,9 @@
 // Header byte arrays are the exact serialized 80-byte CPureBlockHeader fields.
 const crypto = require('node:crypto');
 
+// Litecoin-family Scrypt Stratum difficulty-1 share target.
+const SCRYPT_DIFF1_TARGET = 0x0000ffff00000000000000000000000000000000000000000000000000000000n;
+
 function decodeHex(value, bytes, label) {
   if (typeof value !== 'string' || value.length !== bytes * 2 || !/^[0-9a-f]+$/i.test(value)) {
     throw new TypeError(label + ' must be exactly ' + bytes + ' bytes of hexadecimal data.');
@@ -96,6 +99,20 @@ function compactToTarget(compactHex) {
   return target;
 }
 
+function difficultyToScryptTarget(difficulty) {
+  const text = String(difficulty);
+  if (!/^(?:[0-9]+)(?:\\.[0-9]+)?$/.test(text)) {
+    throw new TypeError('Share difficulty must be a positive decimal number.');
+  }
+  const [whole, fraction = ''] = text.split('.');
+  const numerator = BigInt(whole + fraction);
+  if (numerator <= 0n) throw new RangeError('Share difficulty must be greater than zero.');
+  const denominator = 10n ** BigInt(fraction.length);
+  const target = (SCRYPT_DIFF1_TARGET * denominator) / numerator;
+  if (target <= 0n) throw new RangeError('Share difficulty is too high for uint256 target precision.');
+  return target;
+}
+
 function hashMeetsTarget(hashLE, target) {
   if (!Buffer.isBuffer(hashLE) || hashLE.length !== 32) throw new TypeError('hash must be 32 bytes.');
   if (typeof target !== 'bigint' || target <= 0n) throw new TypeError('target must be a positive BigInt.');
@@ -110,5 +127,7 @@ module.exports = {
   scrypt1024,
   hashToDisplayHex,
   compactToTarget,
+  difficultyToScryptTarget,
+  SCRYPT_DIFF1_TARGET,
   hashMeetsTarget
 };
