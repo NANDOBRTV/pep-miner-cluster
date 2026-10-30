@@ -5,6 +5,7 @@ const { headerWithNonce, scrypt1024, hashMeetsTarget, hashToDisplayHex } = requi
 
 const prefix = Buffer.from(workerData.headerPrefix, 'hex');
 const target = BigInt('0x' + workerData.targetHex);
+const networkTarget = BigInt('0x' + workerData.networkTargetHex);
 const nonceCounter = new BigUint64Array(workerData.nonceCounter);
 const stopFlag = new Int32Array(workerData.stopFlag);
 const jobId = workerData.jobId;
@@ -32,7 +33,8 @@ try {
         extranonce2,
         ntime,
         nonce,
-        hash: hashToDisplayHex(hash)
+        hash: hashToDisplayHex(hash),
+        blockCandidate: hashMeetsTarget(hash, networkTarget)
       });
     }
     if (hashes >= 128) {
