@@ -25,20 +25,20 @@ Select PEP and configure the PEP payout wallet in the Mining-Dutch account dashb
 
 The dashboard is a monitor and `miner/stratum-probe.js` is a diagnostic only. The repository now contains `miner/pep-pow.js`, which implements PEP's 80-byte pure-header serialization helpers, coinbase/Merkle construction, compact network-target decoding, and the Scrypt 1024/1/1/256 primitive.
 
-The Scrypt primitive is checked against all five known-answer vectors in Pepecoin Core's `src/test/scrypt_tests.cpp`. Run `npm run test:pow` in Termux. These tests validate the hash primitive and local byte-layout helpers; they do not yet validate Mining-Dutch's exact Stratum prevhash representation, submit shares, or constitute a running miner.
+The Scrypt primitive is checked against all five known-answer vectors in Pepecoin Core's `src/test/scrypt_tests.cpp`. Run `npm run test:pow` in Termux. The module also calculates the Scrypt Stratum share target from the pool difficulty using the Scrypt difficulty-1 target. These tests validate the hash primitive and local byte-layout helpers; they do not yet validate Mining-Dutch's exact Stratum prevhash representation, submit shares, or constitute a running miner.
 
 **The Stratum mining loop and share-submission client are not implemented yet.**
 
 Remaining milestones:
 
 1. Confirm Mining-Dutch's exact Stratum prevhash and Merkle-branch byte order using a real captured job and an independently reconstructed block header.
-2. Confirm pool share-difficulty target semantics for its Scrypt PEP endpoint.
+2. Verify the pool's reported difficulty against the Scrypt share-target calculation with a real accepted/rejected response.
 3. Implement the Stratum mining loop and nonce/extranonce scheduling.
 4. Submit only shares that pass the local share-target check; count actual pool accept/reject replies.
 5. Measure real PEP Scrypt hashrate and report real counters to the cluster dashboard.
 6. Add reconnect/backoff, graceful stop, and Android thermal safeguards.
 
-A TCP connection and successful Stratum authorization alone do not mean mining is active.
+Mining-Dutch documents `d=` as a password argument for requesting a static share difficulty. For this phone's low CPU hashrate, a low starting difficulty such as `d=1` may be needed to test accepted shares; the pool may clamp or adjust settings. Do not confuse a share target with the network block target. A TCP connection and successful Stratum authorization alone do not mean mining is active.
 
 ## Android ARM64 performance preparation
 
