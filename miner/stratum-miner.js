@@ -181,19 +181,29 @@ function activateJob(params) {
   }
 }
 
-function checkThermal() {
+function readMaxTemperature() {
   const root = '/sys/class/thermal';
   let zones = [];
   try { zones = fs.readdirSync(root).filter(name => /^thermal_zone\d+$/.test(name)); } catch {}
-  if (!zones.length) return;
   let max = -Infinity;
+  let readable = false;
   for (const name of zones) {
     try {
       const raw = Number(fs.readFileSync(path.join(root, name, 'temp'), 'utf8').trim());
-      if (Number.isFinite(raw) && raw > 0) max = Math.max(max, raw > 1000 ? raw / 1000 : raw);
+      if (Number.isFinite(raw) && raw > 0) {
+        readable = true;
+        max = Math.max(max, raw > 1000 ? raw / 1000 : raw);
+      }
     } catch {}
   }
-  if (max >= THERMAL_STOP_C) shutdown('Thermal safety stop at ' + max.toFixed(1) + ' °C.');
+  return readable ? max : null;
+}
+
+function checkThermal() {
+  const max = readMaxTemperature();
+  if (max !== null && max >= THERMAL_STOP_C) {
+    shutdown('Thermal safety stop at ' + max.toFixed(1) + ' °C.');
+  }
 }
 
 async function sendTelemetry(statusOverride) {
@@ -352,11 +362,8 @@ console.log('Endpoint:', parsed.hostname + ':' + parsed.port);
 console.log('Threads:', threads, '| Session limit:', maxRuntimeSeconds, 'seconds');
 if (!dashboardToken) console.log('Dashboard telemetry disabled: start the dashboard first to create its local token.');
 console.log('Safety: stop at 42 °C when a readable sensor exists; Android thermal controls are untouched.');
-try {
-  const zones = fs.readdirSync('/sys/class/thermal').filter(name => /^thermal_zone\d+$/.test(name));
-  if (!zones.length) console.log('WARNING: Termux cannot read thermal sensors. Monitor temperature externally; this session will stop automatically after its time limit.');
-} catch {
-  console.log('WARNING: Termux cannot read thermal sensors. Monitor temperature externally; this session will stop automatically after its time limit.');
+if (readMaxTemperature() === null) {
+  console.log('WARNING: Termux cannot read thermal sensor values. Monitor temperature externally; this session will stop automatically after its time limit.');
 }
 
 function scheduleReconnect(reason) {
