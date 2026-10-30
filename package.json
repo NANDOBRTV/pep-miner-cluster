@@ -1,0 +1,14 @@
+{
+  "name": "pep-miner-cluster",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PEP mining research and multi-device monitoring for Android Termux",
+  "type": "commonjs",
+  "scripts": {
+    "dashboard": "node dashboard/server.js",
+    "check": "node --check dashboard/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
