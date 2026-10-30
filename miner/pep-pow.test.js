@@ -7,6 +7,8 @@ const {
   scrypt1024,
   hashToDisplayHex,
   compactToTarget,
+  difficultyToScryptTarget,
+  SCRYPT_DIFF1_TARGET,
   hashMeetsTarget,
   buildCoinbase,
   computeMerkleRoot
@@ -48,6 +50,9 @@ const coinbase = buildCoinbase('0102', 'aabb', '00000001', '0304');
 assert.equal(coinbase.toString('hex'), '0102aabb000000010304');
 assert.equal(computeMerkleRoot(coinbase, []).length, 32);
 assert.equal(compactToTarget('1d00ffff'), 0xffffn << 208n);
+assert.equal(difficultyToScryptTarget('1'), SCRYPT_DIFF1_TARGET);
+assert.equal(difficultyToScryptTarget('65536'), SCRYPT_DIFF1_TARGET / 65536n);
+assert.equal(difficultyToScryptTarget('0.5'), SCRYPT_DIFF1_TARGET * 2n);
 assert.equal(hashMeetsTarget(Buffer.alloc(32), 1n), true);
 assert.equal(hashMeetsTarget(Buffer.from('01' + '00'.repeat(31), 'hex'), 1n), false);
 
