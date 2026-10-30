@@ -249,9 +249,9 @@ function shutdown(reason) {
   stopWorkers();
   console.log(reason);
   // Allow workers to leave their current Scrypt call and report final counters.
-  sendTelemetry('stopped');
-  setTimeout(() => {
+  setTimeout(async () => {
     reportStats();
+    await sendTelemetry('stopped');
     if (socket && !socket.destroyed) socket.end();
     process.exit(0);
   }, 500);
