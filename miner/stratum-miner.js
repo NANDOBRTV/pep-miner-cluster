@@ -74,6 +74,7 @@ function renderPanel() {
   const stateColor = connectionState === 'mining' ? '\x1b[32m' :
     connectionState === 'connected' ? '\x1b[36m' :
     connectionState === 'reconnecting' ? '\x1b[33m' : '\x1b[31m';
+  const stateLabel = ({ starting: 'INICIANDO', connected: 'CONECTADO', mining: 'MINERANDO', reconnecting: 'RECONECTANDO', stopped: 'PARADO' })[connectionState] || connectionState.toUpperCase();
   const reset = '\x1b[0m';
   const width = Math.max(42, Math.min(64, (process.stdout.columns || 64) - 2));
   const line = '═'.repeat(width);
