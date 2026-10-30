@@ -133,9 +133,10 @@ function startWorkers(job) {
       else if (message.type === 'share') {
         if (message.jobId !== activeJobId || finished) return;
         const nonceHex = message.nonce.toString(16).padStart(8, '0');
+        const requestId = send('mining.submit', [pool.username, message.jobId, message.extranonce2, message.ntime, nonceHex]);
+        if (requestId === null) return;
         submittedShares++;
-        send('mining.submit', [pool.username, message.jobId, message.extranonce2, message.ntime, nonceHex]);
-        console.log('Share candidate:', message.hash, 'nonce:', nonceHex, message.blockCandidate ? 'NETWORK BLOCK TARGET MET' : '');
+        console.log('Share submitted:', message.hash, 'nonce:', nonceHex, message.blockCandidate ? 'NETWORK BLOCK TARGET MET' : '');
       } else if (message.type === 'error') {
         console.error('Hash worker error:', message.message);
         shutdown('Hash worker failed.');
