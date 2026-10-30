@@ -4,6 +4,7 @@
 const assert = require('node:assert/strict');
 const {
   buildHeader,
+  stratumPrevhashToHeader,
   prepareStratumJob,
   headerWithNonce,
   nonceToStratumHex,
@@ -49,9 +50,11 @@ assert.equal(header.subarray(68, 72).toString('hex'), 'cbb1e46a');
 assert.equal(header.subarray(72, 76).toString('hex'), '93cc411a');
 assert.equal(header.subarray(76, 80).toString('hex'), '01000000');
 
+assert.equal(stratumPrevhashToHeader('000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f').toString('hex'), '03020100070605040b0a09080f0e0d0c13121110171615141b1a19181f1e1d1c');
+
 const prepared = prepareStratumJob([
   'job-test',
-  '33'.repeat(32),
+  '${prev}',
   '0102',
   '0304',
   [],
@@ -64,7 +67,7 @@ assert.equal(prepared.jobId, 'job-test');
 assert.equal(prepared.cleanJobs, true);
 assert.equal(prepared.headerPrefix.length, 76);
 assert.equal(prepared.headerPrefix.subarray(0, 4).toString('hex'), '02000020');
-assert.equal(prepared.headerPrefix.subarray(4, 36).toString('hex'), '33'.repeat(32));
+assert.equal(prepared.headerPrefix.subarray(4, 36).toString('hex'), '03020100070605040b0a09080f0e0d0c13121110171615141b1a19181f1e1d1c');
 assert.equal(headerWithNonce(prepared.headerPrefix, 0x12345678).length, 80);
 assert.equal(headerWithNonce(prepared.headerPrefix, 0x12345678).subarray(76).toString('hex'), '78563412');
 assert.equal(nonceToStratumHex(0x12345678), '78563412');
