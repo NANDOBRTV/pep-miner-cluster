@@ -101,7 +101,7 @@ function compactToTarget(compactHex) {
 
 function difficultyToScryptTarget(difficulty) {
   const text = String(difficulty);
-  if (!/^(?:[0-9]+)(?:\\.[0-9]+)?$/.test(text)) {
+  if (!/^(?:[0-9]+)(?:\.[0-9]+)?$/.test(text)) {
     throw new TypeError('Share difficulty must be a positive decimal number.');
   }
   const [whole, fraction = ''] = text.split('.');
