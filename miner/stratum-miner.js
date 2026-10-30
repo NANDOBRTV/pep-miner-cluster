@@ -258,6 +258,10 @@ function shutdown(reason) {
 }
 
 function handleMessage(message) {
+  if (message.method === 'mining.ping' && message.id !== undefined && message.id !== null) {
+    if (socket && !socket.destroyed) socket.write(JSON.stringify({ id: message.id, result: 'pong', error: null }) + '\\n');
+    return;
+  }
   if (message.method === 'mining.set_difficulty') {
     const value = message.params && message.params[0];
     if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
