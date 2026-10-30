@@ -107,6 +107,15 @@ function headerWithNonce(headerPrefix, nonce) {
   return Buffer.concat([headerPrefix, nonceLE]);
 }
 
+function nonceToStratumHex(nonce) {
+  if (!Number.isInteger(nonce) || nonce < 0 || nonce > 0xffffffff) {
+    throw new RangeError('nonce must be an unsigned 32-bit integer.');
+  }
+  const bytes = Buffer.allocUnsafe(4);
+  bytes.writeUInt32LE(nonce, 0);
+  return bytes.toString('hex');
+}
+
 function scrypt1024(header) {
   if (!Buffer.isBuffer(header) || header.length !== 80) {
     throw new TypeError('PEP Scrypt input must be an 80-byte serialized block header.');
@@ -170,6 +179,7 @@ module.exports = {
   buildHeader,
   prepareStratumJob,
   headerWithNonce,
+  nonceToStratumHex,
   scrypt1024,
   hashToDisplayHex,
   compactToTarget,
