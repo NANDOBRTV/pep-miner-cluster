@@ -7,6 +7,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const net = require('node:net');
+const http = require('node:http');
 const { spawn } = require('node:child_process');
 
 const root = path.join(__dirname, '..');
@@ -23,8 +24,19 @@ let child = null;
 let childOutput = '';
 let sawSubmit = false;
 let stopRequested = false;
+let telemetryReceived = false;
 let finished = false;
 const server = net.createServer();
+const dashboardServer = http.createServer((req, res) => {
+  let raw = '';
+  req.on('data', chunk => { raw += chunk; });
+  req.on('end', () => {
+    if (req.method === 'POST' && req.url === '/api/workers' && req.headers['x-cluster-token'] === 'sim-token') {
+      try { const body = JSON.parse(raw); telemetryReceived = body.workerId === 'testworker' && body.status === 'stopped'; } catch {}
+      res.writeHead(202); res.end('{}');
+    } else { res.writeHead(401); res.end('{}'); }
+  });
+});
 const timeout = setTimeout(() => finish(new Error('Simulated miner did not submit a share within 10 seconds.')), 10000);
 
 function sendLine(socket, value) {
@@ -37,12 +49,13 @@ function finish(error) {
   clearTimeout(timeout);
   if (child && child.exitCode === null) child.kill('SIGTERM');
   server.close();
+  dashboardServer.close();
   try { fs.rmSync(temp, { recursive: true, force: true }); } catch {}
   if (error) {
     console.error('Stratum simulation failed:', error.message);
     process.exitCode = 1;
   } else {
-    console.log('Stratum simulation passed: subscribe, authorize, job, Scrypt share submit, and accepted response.');
+    console.log('Stratum simulation passed: subscribe, authorize, job, share submission/acceptance, and dashboard telemetry.');
   }
 }
 
@@ -92,32 +105,37 @@ server.on('connection', socket => {
 });
 
 server.listen(0, '127.0.0.1', () => {
-  const address = server.address();
-  fs.writeFileSync(path.join(tempConfig, 'config.json'), JSON.stringify({
-    pool: {
-      url: 'stratum+tcp://127.0.0.1:' + address.port,
-      username: 'simulation.worker',
-      password: 'd=1'
-    },
-    mining: { threads: 1, max_runtime_seconds: 30 }
-  }));
-  child = spawn(process.execPath, [path.join(tempMiner, 'stratum-miner.js')], {
-    env: { ...process.env, MINE_THREADS: '1', MINE_SECONDS: '30' },
-    stdio: ['ignore', 'pipe', 'pipe']
-  });
-  child.stdout.on('data', chunk => { childOutput += chunk.toString(); });
-  child.stderr.on('data', chunk => { childOutput += chunk.toString(); });
-  child.on('error', error => finish(error));
-  child.on('exit', code => {
-    if (finished) return;
-    try {
-      assert.equal(code, 0, 'miner process should exit cleanly');
-      assert.equal(sawSubmit, true, 'miner should submit at least one share');
-      assert.match(childOutput, /Share ACCEPTED by Mining-Dutch\./);
-      finish(null);
-    } catch (error) {
-      console.error(childOutput);
-      finish(error);
-    }
+  dashboardServer.listen(0, '127.0.0.1', () => {
+    const address = server.address();
+    const dashboardAddress = dashboardServer.address();
+    fs.writeFileSync(path.join(tempConfig, 'config.json'), JSON.stringify({
+      pool: {
+        url: 'stratum+tcp://127.0.0.1:' + address.port,
+        username: 'simulation.worker',
+        password: 'd=1'
+      },
+      mining: { threads: 1, max_runtime_seconds: 30 },
+      dashboard: { url: 'http://127.0.0.1:' + dashboardAddress.port, worker_id: 'testworker' }
+    }));
+    child = spawn(process.execPath, [path.join(tempMiner, 'stratum-miner.js')], {
+      env: { ...process.env, MINE_THREADS: '1', MINE_SECONDS: '30', PEP_CLUSTER_TOKEN: 'sim-token' },
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+    child.stdout.on('data', chunk => { childOutput += chunk.toString(); });
+    child.stderr.on('data', chunk => { childOutput += chunk.toString(); });
+    child.on('error', error => finish(error));
+    child.on('exit', code => {
+      if (finished) return;
+      try {
+        assert.equal(code, 0, 'miner process should exit cleanly');
+        assert.equal(sawSubmit, true, 'miner should submit at least one share');
+        assert.match(childOutput, /Share ACCEPTED by Mining-Dutch\./);
+        assert.equal(telemetryReceived, true, 'miner should post stopped telemetry to dashboard');
+        finish(null);
+      } catch (error) {
+        console.error(childOutput);
+        finish(error);
+      }
+    });
   });
 });
