@@ -35,3 +35,15 @@ Remaining milestones:
 6. Add reconnect/backoff, graceful stop, and Android thermal safeguards.
 
 A TCP connection and successful Stratum authorization alone do not mean mining is active.
+
+## Android ARM64 performance preparation
+
+Run the read-only device profile in Termux:
+
+```bash
+npm run device:profile
+```
+
+It reports the detected architecture, online logical CPUs, readable CPU frequency data, and thermal-zone readings when Android exposes them. It also lists thread-count candidates from 1 through the detected online CPU count. Missing sysfs values are normal on some Android builds.
+
+This tool does not change CPU governors, frequencies, thermal limits, or Android safety controls. It does not claim a hashrate and does not mine. The next performance milestone is a verified ARM64 Scrypt implementation with known-answer tests, followed by a controlled per-thread benchmark and only then real Stratum share submission.
