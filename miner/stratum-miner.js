@@ -37,6 +37,72 @@ if (!dashboardToken) {
   } catch {}
 }
 let telemetryWarningShown = false;
+const interactivePanel = Boolean(process.stdout.isTTY && process.env.TERM !== 'dumb');
+let connectionState = 'starting';
+let panelMessage = 'Inicializando minerador...';
+let lastHashSample = 0;
+let lastHashSampleAt = Date.now();
+let liveHashrate = 0;
+let lastEvents = [];
+function note(message, isError = false) {
+  const line = String(message);
+  panelMessage = line;
+  lastEvents.push(line);
+  if (lastEvents.length > 3) lastEvents.shift();
+  if (!interactivePanel) {
+    (isError ? console.error : console.log)(line);
+  }
+}
+function renderPanel() {
+  if (!interactivePanel) return;
+  const now = Date.now();
+  const elapsedSample = Math.max(0.25, (now - lastHashSampleAt) / 1000);
+  liveHashrate = Math.max(0, (totalHashes - lastHashSample) / elapsedSample);
+  lastHashSample = totalHashes;
+  lastHashSampleAt = now;
+  const elapsed = startedAt ? Math.max(0, (now - startedAt) / 1000) : 0;
+  const fmt = value => {
+    if (value >= 1e9) return (value / 1e9).toFixed(2) + ' GH/s';
+    if (value >= 1e6) return (value / 1e6).toFixed(2) + ' MH/s';
+    if (value >= 1e3) return (value / 1e3).toFixed(2) + ' kH/s';
+    return value.toFixed(2) + ' H/s';
+  };
+  const duration = Math.floor(elapsed);
+  const clock = String(Math.floor(duration / 3600)).padStart(2,'0') + ':' +
+    String(Math.floor(duration % 3600 / 60)).padStart(2,'0') + ':' +
+    String(duration % 60).padStart(2,'0');
+  const stateColor = connectionState === 'mining' ? '\x1b[32m' :
+    connectionState === 'connected' ? '\x1b[36m' :
+    connectionState === 'reconnecting' ? '\x1b[33m' : '\x1b[31m';
+  const reset = '\x1b[0m';
+  const width = Math.max(42, Math.min(64, (process.stdout.columns || 64) - 2));
+  const line = '═'.repeat(width);
+  const row = text => '║ ' + text.padEnd(width - 2).slice(0, width - 2) + ' ║';
+  const rows = [
+    '\x1b[2J\x1b[H',
+    '╔' + line + '╗',
+    row('PEP MINER CLUSTER  •  MINING-DUTCH SOLO'),
+    '╠' + line + '╣',
+    row('CONEXÃO   ' + stateColor + connectionState.toUpperCase() + reset),
+    row('POOL      ' + parsed.hostname + ':' + parsed.port),
+    row('WORKER    ' + workerId),
+    '╠' + line + '╣',
+    row('HASHRATE  ' + fmt(liveHashrate)),
+    row('HASHES    ' + totalHashes.toLocaleString('pt-BR')),
+    row('THREADS   ' + threads + ' / ' + detectedCpus),
+    row('TEMPO     ' + clock + ' / ' + maxRuntimeSeconds + 's'),
+    '╠' + line + '╣',
+    row('SHARES ENVIADAS  ' + submittedShares),
+    row('SHARES ACEITAS   ' + acceptedShares),
+    row('SHARES REJEITADAS ' + rejectedShares),
+    '╠' + line + '╣',
+    row('STATUS: ' + panelMessage),
+    ...lastEvents.slice(-2).map(item => row('> ' + item)),
+    '╚' + line + '╝',
+    'Ctrl+C para parar com segurança.'
+  ];
+  process.stdout.write(rows.join('\n') + '\n');
+}
 let parsed;
 try { parsed = new URL(pool.url); } catch {
   console.error('Invalid pool.url in config/config.json');
@@ -124,10 +190,8 @@ function startWorkers(job) {
   activeJobId = job.jobId;
   totalHashes = totalHashes || 0;
 
-  console.log('Mining job:', job.jobId,
-    '| difficulty:', nextDifficulty,
-    '| threads:', threads,
-    '| extranonce2:', job.extranonce2);
+  connectionState = 'mining';
+  note('Novo trabalho recebido: ' + job.jobId + ' | dificuldade ' + nextDifficulty);
 
   for (let i = 0; i < threads; i++) {
     const worker = new Worker(path.join(__dirname, 'scrypt-worker.js'), {
@@ -152,12 +216,12 @@ function startWorkers(job) {
         submittedShares++;
         console.log('Share submitted:', message.hash, 'nonce:', nonceHex, message.blockCandidate ? 'NETWORK BLOCK TARGET MET' : '');
       } else if (message.type === 'error') {
-        console.error('Hash worker error:', message.message);
+        note('ERRO no worker: ' + message.message, true);
         shutdown('Hash worker failed.');
       }
     });
     worker.on('error', error => {
-      console.error('Worker thread error:', error.message);
+      note('ERRO na thread: ' + error.message, true);
       shutdown('Worker thread failed.');
     });
     activeWorkers.push(worker);
@@ -176,7 +240,7 @@ function activateJob(params) {
     const job = prepareStratumJob(params, subscription.extranonce1, extranonce2);
     startWorkers(job);
   } catch (error) {
-    console.error('Cannot prepare Stratum job:', error.message);
+    note('ERRO ao preparar trabalho: ' + error.message, true);
     shutdown('Invalid mining job.');
   }
 }
@@ -226,12 +290,12 @@ async function sendTelemetry(statusOverride) {
     });
     if (!response.ok && !telemetryWarningShown) {
       telemetryWarningShown = true;
-      console.warn('Dashboard telemetry unavailable: HTTP ' + response.status);
+      note('Telemetria do painel indisponível: HTTP ' + response.status, true);
     }
   } catch (error) {
     if (!telemetryWarningShown) {
       telemetryWarningShown = true;
-      console.warn('Dashboard telemetry unavailable:', error.message);
+      note('Telemetria do painel indisponível: ' + error.message, true);
     }
   }
 }
@@ -239,6 +303,7 @@ async function sendTelemetry(statusOverride) {
 function reportStats() {
   const elapsed = startedAt ? (Date.now() - startedAt) / 1000 : 0;
   const rate = elapsed > 0 ? totalHashes / elapsed : 0;
+  if (interactivePanel) return;
   console.log('Stats:', JSON.stringify({
     elapsed_seconds: Number(elapsed.toFixed(1)),
     hashes: totalHashes,
@@ -257,7 +322,8 @@ function shutdown(reason) {
   if (reconnectTimer) clearTimeout(reconnectTimer);
   clearInterval(telemetryTimer);
   stopWorkers();
-  console.log(reason);
+  connectionState = 'stopped';
+  note(reason);
   // Allow workers to leave their current Scrypt call and report final counters.
   setTimeout(async () => {
     reportStats();
@@ -276,7 +342,7 @@ function handleMessage(message) {
     const value = message.params && message.params[0];
     if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
       nextDifficulty = value;
-      console.log('Pool share difficulty for next job:', value);
+      note('Dificuldade de share atualizada: ' + value);
     }
     return;
   }
@@ -295,11 +361,11 @@ function handleMessage(message) {
     return;
   }
   if (message.method === 'client.show_message') {
-    console.log('Pool message:', message.params && message.params[0]);
+    note('Mensagem da pool: ' + (message.params && message.params[0]));
     return;
   }
   if (message.method) {
-    console.log('Pool notification:', message.method);
+    note('Notificação da pool: ' + message.method);
     return;
   }
 
@@ -309,10 +375,10 @@ function handleMessage(message) {
   if (method === 'mining.submit') {
     if (message.result === true && !message.error) {
       acceptedShares++;
-      console.log('Share ACCEPTED by Mining-Dutch.');
+      note('Share aceita pela Mining-Dutch.');
     } else {
       rejectedShares++;
-      console.log('Share REJECTED:', JSON.stringify(message.error || message.result));
+      note('Share rejeitada: ' + JSON.stringify(message.error || message.result), true);
     }
     return;
   }
@@ -336,7 +402,8 @@ function handleMessage(message) {
       return;
     }
     authorized = true;
-    console.log('Mining-Dutch worker authorized. Waiting for a job.');
+    connectionState = 'connected';
+    note('Worker autorizado; aguardando trabalho da pool.');
     if (currentJobParams) activateJob(currentJobParams);
   }
 }
@@ -350,25 +417,26 @@ function onData(chunk) {
     if (!line) continue;
     let message;
     try { message = JSON.parse(line); } catch {
-      console.log('Ignoring invalid Stratum JSON line.');
+      note('Linha JSON inválida recebida da pool.', true);
       continue;
     }
     handleMessage(message);
   }
 }
 
-console.log('PEP Scrypt miner — Mining-Dutch SOLO only');
-console.log('Endpoint:', parsed.hostname + ':' + parsed.port);
-console.log('Threads:', threads, '| Session limit:', maxRuntimeSeconds, 'seconds');
-if (!dashboardToken) console.log('Dashboard telemetry disabled: start the dashboard first to create its local token.');
-console.log('Safety: stop at 42 °C when a readable sensor exists; Android thermal controls are untouched.');
-if (readMaxTemperature() === null) {
-  console.log('WARNING: Termux cannot read thermal sensor values. Monitor temperature externally; this session will stop automatically after its time limit.');
+if (!interactivePanel) {
+  console.log('PEP Scrypt miner — Mining-Dutch SOLO only');
+  console.log('Endpoint:', parsed.hostname + ':' + parsed.port);
+  console.log('Threads:', threads, '| Session limit:', maxRuntimeSeconds, 'seconds');
+  if (!dashboardToken) console.log('Dashboard telemetry disabled: start the dashboard first to create its local token.');
+  console.log('Safety: stop at 42 °C when a readable sensor exists; Android thermal controls are untouched.');
 }
+if (readMaxTemperature() === null) note('AVISO: sensores térmicos não acessíveis; monitore a temperatura externamente.');
 
 function scheduleReconnect(reason) {
   if (finished || reconnectTimer) return;
-  console.log(reason);
+  connectionState = 'reconnecting';
+  note(reason);
   stopWorkers();
   activeJobId = null;
   authorized = false;
@@ -379,7 +447,7 @@ function scheduleReconnect(reason) {
   extranonceCounter = 0n;
   const delay = reconnectDelayMs;
   reconnectDelayMs = Math.min(reconnectDelayMs * 2, 30000);
-  console.log('Reconnecting to the same Mining-Dutch endpoint in ' + (delay / 1000) + 's.');
+  note('Reconectando ao mesmo endereço em ' + (delay / 1000) + 's.');
   reconnectTimer = setTimeout(() => {
     reconnectTimer = null;
     connectPool();
@@ -395,14 +463,15 @@ function connectPool() {
     if (socket !== connection || finished) return;
     if (!startedAt) startedAt = Date.now();
     reconnectDelayMs = 1000;
-    console.log('Connected to Mining-Dutch. Subscribing...');
+    connectionState = 'connected';
+    note('Conectado à Mining-Dutch; autenticando worker...');
     send('mining.subscribe', ['PEP-Miner-Cluster/0.2']);
   });
   connection.on('data', chunk => {
     if (socket === connection && !finished) onData(chunk);
   });
   connection.on('error', error => {
-    if (socket === connection && !finished) console.error('Stratum socket error:', error.message);
+    if (socket === connection && !finished) note('Erro na conexão Stratum: ' + error.message, true);
   });
   connection.on('close', () => {
     if (socket === connection && !finished) scheduleReconnect('Pool connection closed.');
@@ -415,5 +484,6 @@ connectPool();
 const telemetryTimer = setInterval(() => { sendTelemetry(); }, 10000);
 const statsTimer = setInterval(() => {
   if (finished) return clearInterval(statsTimer);
-  reportStats();
-}, 10000);
+  if (interactivePanel) renderPanel();
+  else reportStats();
+}, interactivePanel ? 1000 : 10000);
