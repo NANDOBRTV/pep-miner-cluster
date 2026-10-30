@@ -1,0 +1,20 @@
+{
+  "project": "PEP Miner Cluster",
+  "coin": "PEP",
+  "algorithm": "scrypt",
+  "worker_id": "worker1",
+  "pool": {
+    "url": "stratum+tcp://POOL_HOST:PORT",
+    "username": "POOL_USERNAME",
+    "password": "POOL_PASSWORD"
+  },
+  "mining": {
+    "threads": 2,
+    "thermal_limit_celsius": 42
+  },
+  "notes": [
+    "This is a template only; replace pool values with details from the pool's official configuration guide.",
+    "Never commit wallet secrets, API keys, passwords, or private keys.",
+    "The current repository scaffold does not yet contain a mining engine."
+  ]
+}
