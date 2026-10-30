@@ -47,3 +47,17 @@ npm run device:profile
 It reports the detected architecture, online logical CPUs, readable CPU frequency data, and thermal-zone readings when Android exposes them. It also lists thread-count candidates from 1 through the detected online CPU count. Missing sysfs values are normal on some Android builds.
 
 This tool does not change CPU governors, frequencies, thermal limits, or Android safety controls. It does not claim a hashrate and does not mine. The next performance milestone is a verified ARM64 Scrypt implementation with known-answer tests, followed by a controlled per-thread benchmark and only then real Stratum share submission.
+
+## Controlled Scrypt benchmark (Termux)
+
+After updating the repository, run:
+
+```bash
+npm run bench:scrypt
+```
+
+The benchmark uses Node's OpenSSL-backed Scrypt primitive with parameters N=1024, r=1, p=1 and a fixed 80-byte test input. It tests thread counts from 1 up to the detected logical CPU count, with short runs and cooldowns. It checks readable Android thermal zones and stops at 42 °C by default. Optional environment settings: `BENCH_MS` (1000–8000), `COOLDOWN_MS` (2000–15000), `MAX_TEMP_C` (38–50), and `MAX_THREADS` (1–logical CPU count).
+
+If Android does not expose thermal zones to Termux, the script warns that automatic thermal stopping is unavailable. Monitor the device independently and stop the test if it becomes uncomfortably hot.
+
+**Interpretation:** this is a Scrypt primitive benchmark, not a complete PEP block-header miner. Its hashes/second must not be presented as pool hashrate. No Stratum shares are computed or submitted. The actual miner still requires verified PEP header serialization, byte order, target comparison, native/optimized ARM64 hashing, and accepted-share tests.
