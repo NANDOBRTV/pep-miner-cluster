@@ -121,6 +121,7 @@ function startWorkers(job) {
       workerData: {
         headerPrefix: job.headerPrefix.toString('hex'),
         targetHex,
+        networkTargetHex: networkTarget.toString(16).padStart(64, '0'),
         nonceCounter,
         stopFlag,
         jobId: job.jobId,
@@ -135,7 +136,7 @@ function startWorkers(job) {
         const nonceHex = message.nonce.toString(16).padStart(8, '0');
         submittedShares++;
         send('mining.submit', [pool.username, message.jobId, message.extranonce2, message.ntime, nonceHex]);
-        console.log('Share candidate:', message.hash, 'nonce:', nonceHex);
+        console.log('Share candidate:', message.hash, 'nonce:', nonceHex, message.blockCandidate ? 'NETWORK BLOCK TARGET MET' : '');
       } else if (message.type === 'error') {
         console.error('Hash worker error:', message.message);
         shutdown('Hash worker failed.');
