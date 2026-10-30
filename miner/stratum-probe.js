@@ -27,7 +27,7 @@ try { parsed = new URL(pool.url); } catch {
   console.error('Invalid pool.url in config/config.json');
   process.exit(2);
 }
-if (!['stratum:', 'stratums:'].includes(parsed.protocol) || !parsed.hostname || !parsed.port) {
+if (!['stratum+tcp:', 'stratum+ssl:'].includes(parsed.protocol) || !parsed.hostname || !parsed.port) {
   console.error('pool.url must be a Stratum URL with an explicit host and port.');
   process.exit(2);
 }
