@@ -1,31 +1,37 @@
 # Mining-Dutch / PEP integration
 
-**Selected pool: Mining-Dutch only.** SoloPool is intentionally not configured.
+**Selected pool: Mining-Dutch only.** No fallback pool is configured.
 
-## Official pool settings checked on 2026-10-30
+## Device-tested connection (2026-10-30)
 
-Mining-Dutch lists Pepecoin (PEP) as a Scrypt pool with native PEP payouts. Select PEP in the Mining-Dutch account dashboard. The published regional Stratum endpoints use port **3407**:
+The user confirmed the following endpoint from their Android device:
 
-- Americas: `stratum+tcp://americas.mining-dutch.nl:3407`
-- Europe: `stratum+tcp://europe.mining-dutch.nl:3407`
-- Asia: `stratum+tcp://asia.mining-dutch.nl:3407`
-- Australia: `stratum+tcp://australia.mining-dutch.nl:3407`
+- `stratum+tcp://brazil.mining-dutch.nl:8888`
+- TCP connection succeeded.
+- Stratum subscribe response received.
+- Stratum authorization accepted.
 
-The pool's published generic miner format is worker `username.workername` and password `x`. Use the exact Mining-Dutch account username, followed by a dot and a worker name. The example config uses `worker1`.
+This is a successful connection/authorization diagnostic for that device and network. It does **not** prove that mining jobs were received, hashes were computed, or shares were submitted/accepted.
 
-The older endpoint previously tried in this project, `india.mining-dutch.nl:8888`, is not listed on the current official PEP pool page; do not assume it is still valid.
+The public Mining-Dutch PEP page documents regional endpoints on port 3407. Those endpoints refused or timed out from the user's test network. Keep the device-tested Brazil endpoint in the local config unless the pool operator changes or confirms its settings.
+
+## Worker credentials
+
+Use the exact Mining-Dutch account username followed by `.workername`, for example `account.worker1`. Use the password specified by the pool/account configuration. Do not commit credentials, API keys, private keys, or seed phrases.
+
+Select PEP and configure the PEP payout wallet in the Mining-Dutch account dashboard.
 
 ## Implementation status
 
-The dashboard is only a monitor. **No mining engine or Stratum client is implemented yet.** A TCP connection or successful Stratum authorization alone does not mean mining is working.
+The dashboard is a monitor and `miner/stratum-probe.js` is a diagnostic only. **No Scrypt mining engine or share-submission client is implemented yet.**
 
-Required milestones:
+Remaining milestones:
 
-1. Implement and test Stratum subscribe/authorize and job notifications against Mining-Dutch.
-2. Confirm the exact Scrypt parameters and byte-order/target handling for PEP.
+1. Receive and parse Stratum mining jobs and difficulty notifications.
+2. Confirm exact PEP Scrypt parameters, serialization, target, and byte order.
 3. Implement Scrypt hashing with known-answer tests on Android ARM64.
-4. Submit only correctly computed shares and count only actual pool accept/reject responses.
-5. Measure hashrate locally and report real counters to the cluster dashboard.
+4. Submit correctly computed shares and count only actual accepted/rejected responses.
+5. Measure local hashrate and report real counters to the cluster dashboard.
 6. Add reconnect/backoff, graceful stop, and Android thermal safeguards.
 
-Never commit account passwords, API keys, private keys, or seed phrases. Keep credentials in local Termux-only files or environment variables.
+A TCP connection and successful Stratum authorization alone do not mean mining is active.
