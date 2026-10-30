@@ -36,7 +36,7 @@ Remaining milestones:
 3. Measure sustained PEP hashrate on the phone and validate telemetry over longer sessions.
 4. Expand Android thermal safeguards for devices that expose readable sensors.
 
-Mining-Dutch documents `d=` as a password argument for requesting a static share difficulty. For this phone's low CPU hashrate, set `pool.password` in the private local `config/config.json` to `d=1` for the first accepted-share test. The pool may clamp or adjust settings. Do not confuse a share target with the network block target. A TCP connection and successful Stratum authorization alone do not mean mining is active.
+Mining-Dutch documents `d=` as a password argument for requesting a static share difficulty. For this phone's low CPU hashrate and the previously observed port difficulty of 65536, set `pool.password` in the private local `config/config.json` to `d=1` for the initial accepted-share diagnostic. Mining-Dutch documents `d=` as a static share-difficulty setting; its automatic mode instead retargets toward roughly one share every five seconds. After confirming the byte order and first accepted shares, remove the static `d=1` setting if you want the pool to manage difficulty. Share difficulty changes how often shares are submitted, not the probability of finding a network block. In SOLO mode, shares are not block rewards. A TCP connection and successful Stratum authorization alone do not mean mining is active.
 
 ## First bounded mining session
 
