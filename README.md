@@ -1,38 +1,59 @@
 # PEP Miner Cluster
 
-Projeto experimental para desenvolver um minerador PEP para Android ARM64/Termux e monitorar várias máquinas (workers) em um painel central.
+Projeto para mineração PEP em Android ARM64/Termux, usando **somente Mining-Dutch SOLO**, com painel de monitoramento multiworker.
 
-## Estado atual
+## Estado real do projeto
 
-- [x] Estrutura inicial do projeto
-- [x] API de monitoramento multiworker com autenticação por token
-- [x] Painel web básico
-- [x] Script de preparação do Termux
-- [ ] Motor nativo Scrypt ARM64
-- [ ] Testes de vetores conhecidos do Scrypt
-- [ ] Cliente Stratum e submissão real de shares
-- [ ] Integração verificada com uma pool PEP
-- [ ] Telemetria real do minerador para o painel
+- [x] Estrutura do projeto, API de monitoramento e painel web.
+- [x] Diagnóstico TCP/Stratum e autorização do worker na Mining-Dutch a partir do Android.
+- [x] Scrypt PEP 1024/1/1/256 validado contra cinco vetores oficiais do Pepecoin Core.
+- [x] Montagem do cabeçalho de 80 bytes, coinbase, Merkle root e alvos de share.
+- [x] Minerador Stratum V1 multithread com envio de shares e contadores de aceitas/rejeitadas.
+- [x] Teste de integração local com pool simulado e reconexão com backoff.
+- [ ] Confirmar share aceita pela Mining-Dutch real e validar definitivamente a ordem dos bytes do job.
+- [ ] Otimização nativa ARM64 e integração da telemetria real com o painel.
 
-**Importante:** esta primeira versão é a infraestrutura de monitoramento. Ela não minera, não gera hashrate fictício e não simula shares ou pagamentos. O motor de mineração só será considerado funcional depois de produzir shares aceitas pela pool.
+**Transparência:** o código de mineração já existe e passou por testes locais, mas ainda não foi confirmado um share aceito pela pool real. Não considere conexão/autorização ou hashrate local como prova de mineração validada.
 
-## Requisitos
+## Configuração
 
-- Android ARM64 com Termux atualizado
-- Node.js LTS
-- Git
-- Para compilar o futuro motor nativo: Clang e CMake
+O endpoint testado no Android foi:
 
-## Instalar no Termux
+```
+stratum+tcp://brazil.mining-dutch.nl:8888
+```
 
-Clone o repositório:
+A configuração privada fica em `config/config.json`, ignorada pelo Git. Use o usuário Mining-Dutch no formato `conta.worker1`, e configure a carteira PEP de pagamento no painel da pool. Para o primeiro teste neste aparelho, use `d=1` como senha do worker para solicitar dificuldade de share baixa; a pool pode ajustar esse valor.
+
+Nunca envie nem publique senha da pool, API key, seed phrase ou chave privada.
+
+## Atualizar e testar no Termux
+
+Dentro da pasta do repositório:
 
 ```bash
-pkg update -y
-pkg install -y git nodejs-lts
-git clone https://github.com/NANDOBRTV/pep-miner-cluster.git
-cd pep-miner-cluster
+git pull
+npm run check
+npm run test:pow
+npm run test:stratum
 ```
+
+- `test:pow`: valida os cinco vetores oficiais e os auxiliares de cabeçalho/alvo.
+- `test:stratum`: executa um teste local com uma pool simulada; não acessa nem minera na pool real.
+
+## Iniciar uma sessão curta de mineração
+
+Com um monitor de temperatura aberto no Android:
+
+```bash
+MINE_THREADS=8 MINE_SECONDS=120 npm run mine
+```
+
+O padrão é 120 segundos; cada sessão é limitada a no máximo 600 segundos. Se o Termux conseguir ler sensores térmicos, o minerador para ao atingir 42 °C. Neste aparelho os sensores não apareceram para o Termux, então monitore a temperatura externamente e interrompa a sessão se aquecer demais. Nenhum limite térmico, frequência ou governor do Android é alterado.
+
+O minerador mostra hashes calculados, hashrate medido, shares submetidas, aceitas e rejeitadas. Só conta uma share como aceita quando a Mining-Dutch responde positivamente. Se a conexão cair, tenta reconectar ao mesmo endpoint com espera progressiva.
+
+## Painel
 
 Inicie o painel local:
 
@@ -40,35 +61,14 @@ Inicie o painel local:
 bash scripts/start-dashboard.sh
 ```
 
-Abra `http://127.0.0.1:8787` no navegador do próprio celular. O script cria um token local em `~/.config/pep-miner-cluster/token`. Para autorizar o painel, copie o token desse arquivo e cole no campo do dashboard.
+Abra `http://127.0.0.1:8787` no navegador do celular. A API/painel ainda não recebe automaticamente as métricas do novo minerador; essa integração é uma etapa pendente.
 
-## API de monitoramento
+## Segurança e limitações
 
-- `GET /health`: estado do serviço.
-- `GET /api/workers`: lista workers registrados (requer `X-Cluster-Token`).
-- `POST /api/workers`: recebe telemetria de um worker (requer `X-Cluster-Token`).
-
-Exemplo de envio de telemetria **somente quando integrada a um minerador real**:
-
-```json
-{
-  "workerId": "worker1",
-  "device": "Android ARM64",
-  "status": "mining",
-  "hashrateH": 0,
-  "accepted": 0,
-  "rejected": 0
-}
-```
-
-Não use os zeros do exemplo como resultado de mineração; são apenas valores de demonstração da estrutura da API.
-
-## Segurança
-
-- Não coloque API keys, senhas de pool, seeds, chaves privadas ou tokens no GitHub.
-- Use somente pools e algoritmos compatíveis com o hardware e a documentação oficial.
-- O painel deve ficar em rede privada confiável. Não exponha a porta publicamente sem HTTPS, firewall e controles adicionais.
-- A mineração contínua pode aquecer e desgastar o aparelho. Comece com poucos threads e monitore a temperatura.
+- Use o aparelho em superfície ventilada e monitore a temperatura; mineração contínua pode aquecer e desgastar o telefone.
+- Não desative as proteções térmicas do Android.
+- Não exponha o painel publicamente sem HTTPS, firewall e autenticação apropriada.
+- O minerador atual usa Node/OpenSSL Scrypt; otimização nativa ARM64 ainda está pendente.
 
 ## Licença
 
