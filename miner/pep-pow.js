@@ -22,23 +22,13 @@ function sha256d(data) {
 }
 
 function buildCoinbase(coinbasePrefix, extranonce1, extranonce2, coinbaseSuffix) {
-  const parts = [
-    Buffer.from(coinbasePrefix, 'hex'),
-    Buffer.from(extranonce1, 'hex'),
-    Buffer.from(extranonce2, 'hex'),
-    Buffer.from(coinbaseSuffix, 'hex')
-  ];
-  for (const part of parts) {
-    if (!part.length && part !== parts[1] && part !== parts[2]) {
-      throw new TypeError('Coinbase components must be valid hexadecimal strings.');
-    }
-  }
-  for (const value of [coinbasePrefix, extranonce1, extranonce2, coinbaseSuffix]) {
+  const values = [coinbasePrefix, extranonce1, extranonce2, coinbaseSuffix];
+  for (const value of values) {
     if (typeof value !== 'string' || value.length % 2 || !/^[0-9a-f]*$/i.test(value)) {
       throw new TypeError('Coinbase components must be even-length hexadecimal strings.');
     }
   }
-  return Buffer.concat(parts);
+  return Buffer.concat(values.map(value => Buffer.from(value, 'hex')));
 }
 
 function computeMerkleRoot(coinbase, branches) {
@@ -46,6 +36,9 @@ function computeMerkleRoot(coinbase, branches) {
   if (!Array.isArray(branches)) throw new TypeError('branches must be an array.');
   let root = sha256d(coinbase);
   for (const branch of branches) {
+    if (!Buffer.isBuffer(branch) && (typeof branch !== 'string' || !/^[0-9a-f]{64}$/i.test(branch))) {
+      throw new TypeError('Each Merkle branch must be 32 bytes of hexadecimal data.');
+    }
     const branchBytes = Buffer.isBuffer(branch) ? branch : Buffer.from(branch, 'hex');
     if (branchBytes.length !== 32) throw new TypeError('Each Merkle branch must be exactly 32 bytes.');
     root = sha256d(Buffer.concat([root, branchBytes]));
