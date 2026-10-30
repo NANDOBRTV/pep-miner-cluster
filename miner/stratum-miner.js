@@ -396,7 +396,7 @@ function connectPool() {
     if (!startedAt) startedAt = Date.now();
     reconnectDelayMs = 1000;
     console.log('Connected to Mining-Dutch. Subscribing...');
-    send('mining.subscribe', ['PEP-Miner-Cluster/0.3']);
+    send('mining.subscribe', ['PEP-Miner-Cluster/0.2']);
   });
   connection.on('data', chunk => {
     if (socket === connection && !finished) onData(chunk);
