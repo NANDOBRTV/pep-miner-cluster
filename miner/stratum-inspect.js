@@ -40,6 +40,8 @@ let nextId = 1;
 let authorized = false;
 let gotJob = false;
 let finished = false;
+let subscription = null;
+let shareDifficulty = null;
 const pending = new Map();
 const timer = setTimeout(() => finish(gotJob ? 0 : 1,
   gotJob ? 'Inspection complete. No hashes were computed and no shares were submitted.' :
@@ -65,6 +67,26 @@ function describeJob(params) {
     'job_id', 'previous_hash', 'coinbase_prefix', 'coinbase_suffix',
     'merkle_branch', 'version', 'network_bits', 'ntime', 'clean_jobs'
   ];
+  const capturePath = path.join(__dirname, '..', 'config', 'job-capture.json');
+  const capture = {
+    captured_at: new Date().toISOString(),
+    pool: parsed.hostname + ':' + parsed.port,
+    worker: pool.username,
+    extranonce1: subscription && subscription.extranonce1,
+    extranonce2_size: subscription && subscription.extranonce2_size,
+    share_difficulty: shareDifficulty,
+    job: {
+      job_id: params[0], previous_hash: params[1], coinbase_prefix: params[2],
+      coinbase_suffix: params[3], merkle_branch: params[4], version: params[5],
+      network_bits: params[6], ntime: params[7], clean_jobs: params[8]
+    }
+  };
+  try {
+    fs.writeFileSync(capturePath, JSON.stringify(capture, null, 2) + '\\n', { mode: 0o600 });
+    console.log('Full public job data saved locally to config/job-capture.json (do not publish this file).');
+  } catch (err) {
+    console.log('Could not save job capture: ' + err.message);
+  }
   console.log('Mining job received:');
   fields.forEach((name, i) => {
     const value = params[i];
@@ -89,6 +111,7 @@ socket.on('data', chunk => {
     try { msg = JSON.parse(line); } catch { console.log('Ignored non-JSON Stratum line.'); continue; }
 
     if (msg.method === 'mining.set_difficulty') {
+      shareDifficulty = msg.params && msg.params[0];
       console.log('Pool share difficulty: ' + JSON.stringify(msg.params));
       continue;
     }
@@ -117,6 +140,7 @@ socket.on('data', chunk => {
     if (method === 'mining.subscribe') {
       const result = msg.result;
       if (Array.isArray(result) && result.length >= 3) {
+        subscription = { extranonce1: result[1], extranonce2_size: result[2] };
         console.log('Subscribe accepted; extranonce1=' + result[1] + '; extranonce2_size=' + result[2]);
       } else {
         console.log('Subscribe response received: ' + JSON.stringify(result));
